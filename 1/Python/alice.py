@@ -28,7 +28,7 @@ data, addr = s.recvfrom(PDU.size)  # 返回数据和接入连接的（客户端�
 print(len(data))
 if crc_check(data):
     ack, seq, info = unpack_pdu(data)
-    print(ack, seq, info)
+    print(ack, seq, info.decode())
 send_frame = PDU(0, 1, 'alicesay01')
 s.sendto(send_frame.bin_pack, addr)  # UDP 是无状态连接，所以每次连接都需要给出目的地址
 s.close()

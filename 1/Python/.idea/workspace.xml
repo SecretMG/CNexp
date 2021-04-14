@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="d99453a0-d227-4063-967d-d0cbe1d8904b" name="Default Changelist" comment="" />
+    <list default="true" id="d99453a0-d227-4063-967d-d0cbe1d8904b" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/alice.py" beforeDir="false" afterPath="$PROJECT_DIR$/alice.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bob.py" beforeDir="false" afterPath="$PROJECT_DIR$/bob.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -14,7 +18,11 @@
       </list>
     </option>
   </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../.." />
+  </component>
   <component name="ProjectId" id="1r4H3wjHD07VUXjVf5jbXWCJoUP" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showExcludedFiles" value="true" />
@@ -26,7 +34,7 @@
     <property name="restartRequiresConfirmation" value="false" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
-  <component name="RunManager" selected="Python.args">
+  <component name="RunManager" selected="Python.bob">
     <configuration name="alice" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="1" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -95,9 +103,9 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.args" />
-        <item itemvalue="Python.alice" />
         <item itemvalue="Python.bob" />
+        <item itemvalue="Python.alice" />
+        <item itemvalue="Python.args" />
       </list>
     </recent_temporary>
   </component>
@@ -112,6 +120,7 @@
       <option name="presentableId" value="Default" />
       <updated>1618228246751</updated>
       <workItem from="1618228250326" duration="5208000" />
+      <workItem from="1618404011426" duration="284000" />
     </task>
     <servers />
   </component>
@@ -119,22 +128,22 @@
     <option name="version" value="1" />
   </component>
   <component name="WindowStateProjectService">
-    <state width="1493" height="210" key="GridCell.Tab.0.bottom" timestamp="1618234509118">
+    <state width="1493" height="210" key="GridCell.Tab.0.bottom" timestamp="1618404305763">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="210" key="GridCell.Tab.0.bottom/0.0.1536.824@0.0.1536.824" timestamp="1618234509118" />
-    <state width="1493" height="210" key="GridCell.Tab.0.center" timestamp="1618234509118">
+    <state width="1493" height="210" key="GridCell.Tab.0.bottom/0.0.1536.824@0.0.1536.824" timestamp="1618404305763" />
+    <state width="1493" height="210" key="GridCell.Tab.0.center" timestamp="1618404305763">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="210" key="GridCell.Tab.0.center/0.0.1536.824@0.0.1536.824" timestamp="1618234509118" />
-    <state width="1493" height="210" key="GridCell.Tab.0.left" timestamp="1618234509118">
+    <state width="1493" height="210" key="GridCell.Tab.0.center/0.0.1536.824@0.0.1536.824" timestamp="1618404305763" />
+    <state width="1493" height="210" key="GridCell.Tab.0.left" timestamp="1618404305762">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="210" key="GridCell.Tab.0.left/0.0.1536.824@0.0.1536.824" timestamp="1618234509118" />
-    <state width="1493" height="210" key="GridCell.Tab.0.right" timestamp="1618234509118">
+    <state width="1493" height="210" key="GridCell.Tab.0.left/0.0.1536.824@0.0.1536.824" timestamp="1618404305762" />
+    <state width="1493" height="210" key="GridCell.Tab.0.right" timestamp="1618404305763">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="210" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1618234509118" />
+    <state width="1493" height="210" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1618404305763" />
     <state x="270" y="54" key="SettingsEditor" timestamp="1618228338904">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
@@ -142,7 +151,10 @@
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/1$bob.coverage" NAME="bob Coverage Results" MODIFIED="1618233482038" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Python$args.coverage" NAME="args Coverage Results" MODIFIED="1618404071275" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/1$alice.coverage" NAME="alice Coverage Results" MODIFIED="1618233484519" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Python$bob.coverage" NAME="bob Coverage Results" MODIFIED="1618404136307" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/1$args.coverage" NAME="args Coverage Results" MODIFIED="1618233976729" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Python$alice.coverage" NAME="alice Coverage Results" MODIFIED="1618404133524" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

@@ -29,5 +29,5 @@ s.sendto(send_frame.bin_pack, ('127.0.0.1', port))
 data, addr = s.recvfrom(PDU.size)  # 返回数据和接入连接的（服务端）地址
 if crc_check(data):
     ack, seq, info = unpack_pdu(data)
-    print(ack, seq, info)
+    print(ack, seq, info.decode())
 s.close()
