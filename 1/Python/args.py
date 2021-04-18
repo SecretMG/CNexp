@@ -4,10 +4,25 @@
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    '--port', '-p',
+    '--port1', '-p1',
     default=42328,
-    help='UDP 端口'
-)   # UDP端口
+    help='UDP 端口1'
+)   # UDP端口1
+parser.add_argument(
+    '--port2', '-p2',
+    default=42329,
+    help='UDP 端口2'
+)   # UDP端口2
+parser.add_argument(
+    '--port3', '-p3',
+    default=42330,
+    help='UDP 端口3'
+)   # UDP端口3
+parser.add_argument(
+    '--port4', '-p4',
+    default=42331,
+    help='UDP 端口4'
+)   # UDP端口4
 parser.add_argument(
     '--data_size', '-ds',
     default=1024,
