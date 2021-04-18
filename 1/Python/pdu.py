@@ -4,6 +4,21 @@
 """
 PDU结构定义
 CRC检验
+
+说明：
+CRC验证根据要求采用CRC16-CCITT，多项式为x16+x12+x5+1，PDU采用高位在前的传输格式，则生成多项式为0x11021
+
+1.把第一个8位二进制数据（既通讯信息帧的第一个字节）与16位的CRC寄存器的低8位相异或，把结果放于CRC寄存器
+2.把CRC寄存器的内容右移一位（朝低位）用0填补最高位，并检查右移后的移出位
+3.如果移出位为0：重复第2步（再次右移一位）
+  如果移出位为1，CRC寄存器与生成多项式进行异或
+4.重复步骤2和3，直到右移8次。
+5.对下一个8位进行处理
+
+crc_list即为对8位数据求得的CRC校验码(模二除法)
+
+crc = crc_list[((crc >> 8) ^ bin_pack[i]) & 0xFF] ^ (crc << 8) % (0xFFFF + 1)
+              取crc高八位与本次的8位数据异或             低八位左移变为高八位并与结果异或
 """
 
 import struct
@@ -96,7 +111,7 @@ class PDU:
         # CRC16‐CCITT 计算self.check_num
         # 查表法 多项式1021
 
-        pre_bin_pack = struct.pack('>HH1024s', self.seq, self.ack, self.info.encode('utf-8'))
+        pre_bin_pack = struct.pack('>HH%ds' % args.data_size, self.seq, self.ack, self.info.encode('utf-8'))
         crc = 0
         for i in range(len(pre_bin_pack)):
             crc = crc_list[((crc >> 8) ^ pre_bin_pack[i]) & 0xFF] ^ (crc << 8) % (0xFFFF + 1)
