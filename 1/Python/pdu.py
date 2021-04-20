@@ -100,12 +100,21 @@ class PDU:
 
     size = 2+2+args.data_size+2
 
-    def __init__(self, seq, ack, info):
+    def __init__(self, seq=0, ack=0, info=''):
         self.seq = seq
         self.ack = ack
         self.info = info
         self.check_num = self.__get_check_sum()
         self.bin_pack = struct.pack('>HH%dsH' % args.data_size, seq, ack, info.encode('utf-8'), self.check_num)
+
+    def update(self, seq=0, ack=0, info=''):
+        if seq == -1:
+            seq = self.seq
+        if ack == -1:
+            ack = self.ack
+        if info == '':
+            info = self.info
+        self.__init__(seq, ack, info)
 
     def __get_check_sum(self):
         # CRC16‐CCITT 计算self.check_num
