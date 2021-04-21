@@ -108,9 +108,9 @@ class PDU:
         self.bin_pack = struct.pack('>HH%dsH' % args.data_size, seq, ack, info.encode('utf-8'), self.check_num)
 
     def update(self, seq=0, ack=0, info=''):
-        if seq == -1:
+        if seq == 0:
             seq = self.seq
-        if ack == -1:
+        if ack == 0:
             ack = self.ack
         if info == '':
             info = self.info
