@@ -143,30 +143,23 @@ public class Receiver extends JPanel implements Runnable{
                     ackMsg = SENT;
                 }
 
-                //send ACK within a probability
-                double dack = rng.nextDouble();
-                if(dack >= p){
 
-                    //SEND acknowledgement
-                    //send ASK back to host that sent the packet.
-                    ack.setAddress(rp.getAddress());
-                    ack.setPort(rp.getPort());
+                //SEND acknowledgement
+                //send ASK back to host that sent the packet.
+                ack.setAddress(rp.getAddress());
+                ack.setPort(rp.getPort());
 
-                    try{
-                        socket.send(ack);
-                        //put the packet in a pocket.
-                        PacketPocket ackPack = new PacketPocket(ack, ackMsg, PacketType.ACK);
-                        ackPackets.add(ackPack);
-                    }
-                    catch(IOException ioe){
-                        System.err.println("IOException occurred " +
-                                "while sending!");
-                    }
+                try{
+                    socket.send(ack);
+                    //put the packet in a pocket.
+                    PacketPocket ackPack = new PacketPocket(ack, ackMsg, PacketType.ACK);
+                    ackPackets.add(ackPack);
                 }
-                else{
-                    //LOST ACK
-                    ackPackets.add(new PacketPocket(ack, LOST, PacketType.ACK));
+                catch(IOException ioe){
+                    System.err.println("IOException occurred " +
+                            "while sending!");
                 }
+
             }
 
 
