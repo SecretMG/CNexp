@@ -40,11 +40,11 @@ public class Receiver extends JPanel implements Runnable{
         p1.add(new JLabel("Packet Loss (0..1)"));
         prob = new JTextField(10);
         p1.add(prob);
-        prob.setText("0.5");
+        prob.setText("0.3");
         p1.add(new JLabel(" MAX SEQ NUM"));
         N = new JTextField(10);
         p1.add(N);
-        N.setText("20");
+        N.setText("10");
         add("North", p1);
 
         //column header for the table
@@ -89,7 +89,7 @@ public class Receiver extends JPanel implements Runnable{
     }
 
     public void run(){
-        byte expectedSequenceNumber = 1;
+        byte expectedSequenceNumber = 0;
         //ack for packet 0 (not initially sent)
         DatagramPacket ack = new DatagramPacket(new byte[]{0}, 1);
         while(!done){
@@ -129,15 +129,17 @@ public class Receiver extends JPanel implements Runnable{
 
                 //if we got the packet we expected
                 if(pack.id == expectedSequenceNumber){
-                    //set the appropriate acknowledgment id
-                    ack.setData(new byte[] {pack.id});
                     //increase the expectedSeqNum mod N
                     //get the value of N
                     byte n = Byte.parseByte(N.getText());
                     expectedSequenceNumber =
                             (byte)((expectedSequenceNumber + 1) % n);
+
+                    //set the appropriate acknowledgment id
+                    ack.setData(new byte[] {expectedSequenceNumber});
+
                     //update the text area (send data to application)
-                    text.append("" + pack.data);
+//                    text.append("" + pack.data.toString());
                     ackMsg = SENT;
                 }
 
