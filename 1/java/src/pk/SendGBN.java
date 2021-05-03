@@ -131,13 +131,14 @@ public class SendGBN{
             // send an end of line character
             //
         }
-        while(base != nextSeqNum || timeout || unAckedPackets != 0) {
+        while(base+1 != nextSeqNum || timeout || unAckedPackets != 0) {
             Thread.yield();
         }
         done = true;
         timer.cancel();
         socket.close();
         System.out.println("Done!");
+        System.exit(0);
     }
 
     /*
