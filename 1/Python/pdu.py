@@ -83,7 +83,7 @@ def unpack_pdu(bin_pack):
     :param bin_pack:
     :return: seq, ack, 未解码info
     """
-    seq, ack, info, check_num = struct.unpack('>HH%dsH' % args.data_size, bin_pack)
+    seq, ack, info, check_num = struct.unpack('>hh%dsH' % args.data_size, bin_pack)
     return seq, ack, info
 
 
@@ -100,17 +100,17 @@ class PDU:
 
     size = 2+2+args.data_size+2
 
-    def __init__(self, seq=0, ack=0, info=''):
+    def __init__(self, seq=-1, ack=-1, info=''):
         self.seq = seq
         self.ack = ack
         self.info = info
         self.check_num = self.__get_check_sum()
-        self.bin_pack = struct.pack('>HH%dsH' % args.data_size, seq, ack, info.encode('utf-8'), self.check_num)
+        self.bin_pack = struct.pack('>hh%dsH' % args.data_size, seq, ack, info.encode('utf-8'), self.check_num)
 
-    def update(self, seq=0, ack=0, info=''):
-        if seq == 0:
+    def update(self, seq=-1, ack=-1, info=''):
+        if seq == -1:
             seq = self.seq
-        if ack == 0:
+        if ack == -1:
             ack = self.ack
         if info == '':
             info = self.info
@@ -120,9 +120,8 @@ class PDU:
         # CRC16‐CCITT 计算self.check_num
         # 查表法 多项式1021
 
-        pre_bin_pack = struct.pack('>HH%ds' % args.data_size, self.seq, self.ack, self.info.encode('utf-8'))
+        pre_bin_pack = struct.pack('>hh%ds' % args.data_size, self.seq, self.ack, self.info.encode('utf-8'))
         crc = 0
         for i in range(len(pre_bin_pack)):
             crc = crc_list[((crc >> 8) ^ pre_bin_pack[i]) & 0xFF] ^ (crc << 8) % (0xFFFF + 1)
         return crc
-

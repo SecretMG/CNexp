@@ -7,9 +7,9 @@
 发送窗口-接收线程
 发送窗口-超时控制定时器线程池
 发送窗口-文件读入
+接收窗口
 
 待完成：
-接收窗口
 一些细节
 """
 
@@ -17,14 +17,17 @@ from threading import Thread, Timer, Event
 from args import args
 import time
 from pdu import PDU, unpack_pdu, crc_check
+import socket
 import random
 
 class SendingWindow:
     # 发送窗口
-    def __init__(self, filelist):
-        #
+    def __init__(self, my_binding, sendto_sock, filelist):
+        self.mybinding = my_binding
+        self.target = sendto_sock
         self.filelist = filelist
         self.fileptr = args.sending_window_size - 1
+
         # 事件定义
         self.__event_mainthread = Event()
         self.__event_send = Event()
@@ -103,12 +106,10 @@ class SendingWindow:
             if (self.last_sent >= -1) and (self.last_sent < args.sending_window_size-1):
                 self.last_sent += 1
                 if self.sw_pdulist[self.last_sent].info != '#':
-                    send_pdu(self.sw_pdulist[self.last_sent])
+                    send_pdu(self.sw_pdulist[self.last_sent], self.mybinding, self.target)
                     self.sw_timeouter[self.last_sent] = Timer(args.time_out/1000, self.__thread_timeout)
                     # print("%d已设置Timer"%self.last_sent)
                     self.sw_timeouter[self.last_sent].start()
-            else:
-                pass
             self.__event_send.clear()
             self.__event_endsend.set()
 
@@ -134,11 +135,11 @@ class SendingWindow:
     def __thread_timeout(self):
         # 超时一定是最先出发的超时，这样更安全
         if self.__event_timeout.is_set():
-            print("已触发")
+            print("已触发\n", end='')
             return
         else:
             self.__event_timeout.set()
-            print("超时触发")
+            print("超时触发\n", end='')
 
     def __thread_slide(self):
         while True:
@@ -146,14 +147,14 @@ class SendingWindow:
             if (self.last_sent >= 0) and (len(self.sw_recvlist) > 0) and (self.fileptr < len(self.filelist) + args.sending_window_size - 1):
                 if self.sw_recvlist[0] == self.sw_nolist[0]:
                     print("slide%d"%self.sw_nolist[0])
-                    # nolist向右滑动一位
-                    self.sw_nolist.append(self.sw_nolist.pop(0))
-                    self.last_sent -= 1
                     # timer向右滑动一位
                     if self.sw_timeouter[0] is not None:
                         self.sw_timeouter[0].cancel()
                     self.sw_timeouter.pop(0)
                     self.sw_timeouter.append(None)
+                    # nolist向右滑动一位
+                    self.sw_nolist.append(self.sw_nolist.pop(0))
+                    self.last_sent -= 1
                     # PDU向右滑动一位
                     self.sw_pdulist.append(self.sw_pdulist.pop(0))
 
@@ -164,24 +165,23 @@ class SendingWindow:
                         self.sw_pdulist[-1].update(seq=self.sw_nolist[-1], info=self.filelist[self.fileptr])
                 else:
                     self.sw_recvlist.pop(0)
-            else:
-                # 无效包
-                pass
             self.__event_slide.clear()
             self.__event_endslide.set()
 
 
 class RecvingWindow:
     # 接收窗口
-    def __init__(self):
+    def __init__(self, my_binding, sendto_sock):
         # 事件定义
+        self.my_binding = my_binding
+        self.target = sendto_sock
         self.__event_mainthread = Event()
         # 主线程
         self.__thread_main = Thread(target=self.__main_thread)
         # 接收窗口
         self.rw_needack = 0
-        # 反馈包
-        self.rw_pdu = PDU()
+        # seq&info
+        self.seq_and_info = []
 
     def start(self):
         self.__thread_main.start()
@@ -194,39 +194,53 @@ class RecvingWindow:
         while True:
             self.__event_mainthread.wait()
 
-            # recv
-            # 验错
-            # 获得pdu
-            # 比较seq与needack
+            if len(self.seq_and_info) != 0:
+                seq, info = self.seq_and_info.pop(0)
+                if seq == self.rw_needack:
+                    pass                # info写入文件接口
+                    self.rw_needack = (seq+1) % args.sending_window_size
+                    # 发送反馈
+                    p = PDU(ack=seq, info='ACK PACKET')
+                    send_pdu(p, self.my_binding, self.target)
+                    print("sendack%d"%seq)
 
-            seq = random.randint(0, 3)
-            if seq == self.rw_needack:
-                # pdu.info写入
-                self.rw_needack = (seq+1) % args.sending_window_size
-                # 发送反馈
-                self.rw_pdu.update(ack=seq)
-                print("sendack%d"%seq)
-                # send(pdu.binpack)
-            else:
-                # 丢弃pdu
-                pass
+    def get_seq_and_info(self, seq, info):
+        self.seq_and_info.append((seq, info))
 
 
-def send_pdu(pdu):
-    print("sentpdu:seq=%d, info=%s" % (pdu.seq, pdu.info))
+def send_pdu(pdu, my_binding, target_sock):
+    print("sentpdu:seq=%d, ack=%d info=%s" % (pdu.seq, pdu.ack, pdu.info))
+    my_binding.sendto(pdu.bin_pack, target_sock)
 
-def recv_thread(sw, rw):
-    # 处理
+def recv_thread(my_binding, sw, rw):
+    """
+
+    :param binding:
+    :param sw:
+    :param rw:
+    :return:
+    """
+    # 接收PDU并将PDU分类（Ack回执包或接受的数据包）
+    # 待完善：结束处理
     while True:
-        # pdu = unpack_pdu()
-        ack = random.randint(0, 3)
-        # 分类
-        time.sleep(0.05)
-        sw.get_ack(ack)
+        # 每次传输一个PDU
+        binpack = my_binding.recv(PDU.size)
+
+        if not crc_check(binpack):
+            continue
+        else:
+            seq, ack, info = unpack_pdu(binpack)
+
+            if seq == -1:
+                # ack包
+                sw.get_ack(ack)
+            elif ack == -1:
+                # 数据包
+                rw.get_seq_and_info(seq, info)
 
 
 def client():
-    file = ['023a', '134e', '24567y', '34dsfa', '41234s', '52134', '61234ss', 'eeenD' ,'ax]=========']
+    file = ['023a', '134e', '24567y', '34dsfa', '41234s', '52134', '61234ss', 'eeenD', 'ax]=========']
     # 发送窗口实例化
     sw = SendingWindow(file)
     rw = RecvingWindow()
@@ -242,4 +256,42 @@ def client():
     sw.stop()
 
 
-client()
+ip = '127.0.0.1'  # 服务器ip和端口
+port1, port2, port3, port4 = args.port1, args.port2, args.port3, args.port4
+file1 = ['023a', '134e', '24567y', '34dsfa', '41234s', '52134', '61234ss', 'eeenD' ,'ax]=========']
+file2 = ['12', '2313','2313','2313']
+
+sock1 = (ip, port1)
+sock2 = (ip, port2)
+sock3 = (ip, port3)
+sock4 = (ip, port4)
+
+binding1 = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+binding2 = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+binding3 = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+binding4 = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+binding1.bind(sock1)
+binding2.bind(sock2)
+binding3.bind(sock3)
+binding4.bind(sock4)
+
+#
+
+sw_1 = SendingWindow(binding1, sock2, file1)
+rw_1 = RecvingWindow(binding1, sock2)
+recv_thread_1 = Thread(target=recv_thread, args=(binding1, sw_1, rw_1))
+
+sw_2 = SendingWindow(binding2, sock1, file2)
+rw_2 = RecvingWindow(binding2, sock1)
+recv_thread_2 = Thread(target=recv_thread, args=(binding2, sw_2, rw_2))
+
+
+# 开始发送线程
+sw_1.start()
+rw_1.start()
+recv_thread_1.start()
+sw_2.start()
+rw_2.start()
+recv_thread_2.start()
+
