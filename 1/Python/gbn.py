@@ -10,15 +10,14 @@
 接收窗口
 
 待完成：
-一些细节
+文件写入接口
 """
 
 from threading import Thread, Timer, Event
 from args import args
-import time
 from pdu import PDU, unpack_pdu, crc_check
 import socket
-import random
+
 
 class SendingWindow:
     # 发送窗口
@@ -126,7 +125,7 @@ class SendingWindow:
             for i in self.sw_timeouter:
                 if i is not None:
                     i.cancel()
-            print("计数器进程池清理完成")
+            print("计数器线程池清理完成")
             self.last_sent = -1
             # 恢复主线程
             self.__event_timeout.clear()
@@ -182,6 +181,8 @@ class RecvingWindow:
         self.rw_needack = 0
         # seq&info
         self.seq_and_info = []
+        # 接收到的信息
+        self.recv_info = []
 
     def start(self):
         self.__thread_main.start()
@@ -197,6 +198,7 @@ class RecvingWindow:
             if len(self.seq_and_info) != 0:
                 seq, info = self.seq_and_info.pop(0)
                 if seq == self.rw_needack:
+                    self.recv_info.append(info)
                     pass                # info写入文件接口
                     self.rw_needack = (seq+1) % args.sending_window_size
                     # 发送反馈
@@ -212,54 +214,65 @@ def send_pdu(pdu, my_binding, target_sock):
     print("sentpdu:seq=%d, ack=%d info=%s" % (pdu.seq, pdu.ack, pdu.info))
     my_binding.sendto(pdu.bin_pack, target_sock)
 
-def recv_thread(my_binding, sw, rw):
-    """
 
-    :param binding:
-    :param sw:
-    :param rw:
-    :return:
-    """
+def recv_thread(my_binding, sw=None, rw=None):
     # 接收PDU并将PDU分类（Ack回执包或接受的数据包）
     # 待完善：结束处理
     while True:
         # 每次传输一个PDU
-        binpack = my_binding.recv(PDU.size)
+        binpack, sender_ip = my_binding.recvfrom(PDU.size)
 
         if not crc_check(binpack):
             continue
         else:
             seq, ack, info = unpack_pdu(binpack)
 
-            if seq == -1:
+            if seq == -1 and sw is not None:
                 # ack包
                 sw.get_ack(ack)
-            elif ack == -1:
+            elif ack == -1 and rw is not None:
                 # 数据包
                 rw.get_seq_and_info(seq, info)
 
 
-def client():
-    file = ['023a', '134e', '24567y', '34dsfa', '41234s', '52134', '61234ss', 'eeenD', 'ax]=========']
-    # 发送窗口实例化
-    sw = SendingWindow(file)
-    rw = RecvingWindow()
+class GbnProtocol:
+    """
+    Gbn协议（双向通信）
+    mode:    0:发送+接收    1：只发送    2：只接收
+    """
+    def __init__(self, my_binding, target_sock, file_list=[]):
+        self.binding = my_binding
+        self.sock = target_sock
+        self.file = file_list
+        self.mode = -1
 
+    def start(self):
+        if self.mode == 0:
+            sw = SendingWindow(self.binding, self.sock, self.file)
+            rw = RecvingWindow(self.binding, self.sock)
+            self.recv_thread = Thread(target=recv_thread, args=(self.binding, sw, rw))
 
-    # 开始发送线程
-    sw.start()
-
-    recv_thread(sw,rw)
-    # rw = RecvingWindow()
-    # rw.start()
-    # rw.stop()
-    sw.stop()
+            self.recv_thread.start()
+            sw.start()
+            rw.start()
+        elif self.mode == 1:
+            sw = SendingWindow(self.binding, self.sock, self.file)
+            self.recv_thread = Thread(target=recv_thread, args=(self.binding, sw, None))
+            self.recv_thread.start()
+            sw.start()
+        elif self.mode == 2:
+            rw = RecvingWindow(self.binding, self.sock)
+            self.recv_thread = Thread(target=recv_thread, args=(self.binding, None, rw))
+            self.recv_thread.start()
+            rw.start()
+        else:
+            print("Please choose mode in [0, 1, 2].")
 
 
 ip = '127.0.0.1'  # 服务器ip和端口
 port1, port2, port3, port4 = args.port1, args.port2, args.port3, args.port4
-file1 = ['023a', '134e', '24567y', '34dsfa', '41234s', '52134', '61234ss', 'eeenD' ,'ax]=========']
-file2 = ['12', '2313','2313','2313']
+file1 = ['023a', '134e', '24567y', '34dsfa', '41234s', '52134', '61234ss', 'eeenD', 'ax]=========']
+file2 = ['12', '2313', '2313', '2313']
 
 sock1 = (ip, port1)
 sock2 = (ip, port2)
@@ -271,27 +284,19 @@ binding2 = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 binding3 = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 binding4 = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
+binding1.getsockname()
+
 binding1.bind(sock1)
 binding2.bind(sock2)
 binding3.bind(sock3)
 binding4.bind(sock4)
 
-#
+a = GbnProtocol(binding1, sock2, file1)
+b = GbnProtocol(binding2, sock1)
 
-sw_1 = SendingWindow(binding1, sock2, file1)
-rw_1 = RecvingWindow(binding1, sock2)
-recv_thread_1 = Thread(target=recv_thread, args=(binding1, sw_1, rw_1))
+a.mode = 1
+b.mode = 2
 
-sw_2 = SendingWindow(binding2, sock1, file2)
-rw_2 = RecvingWindow(binding2, sock1)
-recv_thread_2 = Thread(target=recv_thread, args=(binding2, sw_2, rw_2))
-
-
-# 开始发送线程
-sw_1.start()
-rw_1.start()
-recv_thread_1.start()
-sw_2.start()
-rw_2.start()
-recv_thread_2.start()
+a.start()
+b.start()
 
