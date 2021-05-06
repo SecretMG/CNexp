@@ -17,6 +17,7 @@ from threading import Thread, Timer, Event
 from args import args
 from pdu import PDU, unpack_pdu, crc_check
 import socket
+from loss_error import loss_with_rate, error_with_rate
 
 
 class SendingWindow:
@@ -70,7 +71,7 @@ class SendingWindow:
         #self.__event_recv.clear()
         self.__event_timer.clear()
         self.__event_mainthread.clear()
-        print("停止请求已发送")
+        print("停止请求已发送\n", end='')
 
     def __main_thread(self):
         while True:
@@ -117,7 +118,7 @@ class SendingWindow:
             self.__event_timer.wait()
             self.__event_timeout.wait()
             # 停止发送和滑动
-            print("等待结束发送滑动线程")
+            print("等待结束发送滑动线程\n", end='')
             self.__event_mainthread.clear()
             self.__event_endsend.wait()
             self.__event_endslide.wait()
@@ -125,7 +126,7 @@ class SendingWindow:
             for i in self.sw_timeouter:
                 if i is not None:
                     i.cancel()
-            print("计数器线程池清理完成")
+            print("计数器线程池清理完成\n", end='')
             self.last_sent = -1
             # 恢复主线程
             self.__event_timeout.clear()
@@ -143,27 +144,30 @@ class SendingWindow:
     def __thread_slide(self):
         while True:
             self.__event_slide.wait()
-            if (self.last_sent >= 0) and (len(self.sw_recvlist) > 0) and (self.fileptr < len(self.filelist) + args.sending_window_size - 1):
-                if self.sw_recvlist[0] == self.sw_nolist[0]:
-                    print("slide%d"%self.sw_nolist[0])
-                    # timer向右滑动一位
-                    if self.sw_timeouter[0] is not None:
-                        self.sw_timeouter[0].cancel()
-                    self.sw_timeouter.pop(0)
-                    self.sw_timeouter.append(None)
-                    # nolist向右滑动一位
-                    self.sw_nolist.append(self.sw_nolist.pop(0))
-                    self.last_sent -= 1
-                    # PDU向右滑动一位
-                    self.sw_pdulist.append(self.sw_pdulist.pop(0))
+            # 文件未读完
+            if self.fileptr < len(self.filelist) + args.sending_window_size - 1 and (len(self.sw_recvlist) > 0):
+                # 是否滑动
+                if self.sw_recvlist[0] in self.sw_nolist[0:self.last_sent+1]:
+                    slide_times = self.sw_nolist.index(self.sw_recvlist[0], 0, self.last_sent+1) + 1
+                    for i in range(slide_times):
+                        print("\033[7mslide%d\033[0m\n" % self.sw_nolist[0], end='')
+                        # timer向右滑动一位
+                        if self.sw_timeouter[0] is not None:
+                            self.sw_timeouter[0].cancel()
+                        self.sw_timeouter.pop(0)
+                        self.sw_timeouter.append(None)
+                        # nolist向右滑动一位
+                        self.sw_nolist.append(self.sw_nolist.pop(0))
+                        self.last_sent -= 1
+                        # PDU向右滑动一位
+                        self.sw_pdulist.append(self.sw_pdulist.pop(0))
 
-                    self.fileptr += 1
-                    if self.fileptr + 1 > len(self.filelist):
-                        self.sw_pdulist[-1].update(seq=self.sw_nolist[-1], info='#')
-                    else:
-                        self.sw_pdulist[-1].update(seq=self.sw_nolist[-1], info=self.filelist[self.fileptr])
-                else:
-                    self.sw_recvlist.pop(0)
+                        self.fileptr += 1
+                        if self.fileptr + 1 > len(self.filelist):
+                            self.sw_pdulist[-1].update(seq=self.sw_nolist[-1], info='#')
+                        else:
+                            self.sw_pdulist[-1].update(seq=self.sw_nolist[-1], info=self.filelist[self.fileptr])
+            self.sw_recvlist.pop(0)
             self.__event_slide.clear()
             self.__event_endslide.set()
 
@@ -202,17 +206,19 @@ class RecvingWindow:
                     pass                # info写入文件接口
                     self.rw_needack = (seq+1) % args.sending_window_size
                     # 发送反馈
-                    p = PDU(ack=seq, info='ACK PACKET')
-                    send_pdu(p, self.my_binding, self.target)
-                    print("sendack%d"%seq)
+                p = PDU(ack=seq, info='ACK PACKET')
+                send_pdu(p, self.my_binding, self.target)
+                print("sendack%d\n"%seq, end='')
 
     def get_seq_and_info(self, seq, info):
         self.seq_and_info.append((seq, info))
 
 
 def send_pdu(pdu, my_binding, target_sock):
-    print("sentpdu:seq=%d, ack=%d info=%s" % (pdu.seq, pdu.ack, pdu.info))
-    my_binding.sendto(pdu.bin_pack, target_sock)
+    print("sentpdu:seq=%d, ack=%d info=%s\n" % (pdu.seq, pdu.ack, pdu.info), end='')
+
+    send_pack = error_with_rate(0.2, pdu.bin_pack)
+    my_binding.sendto(send_pack, target_sock)
 
 
 def recv_thread(my_binding, sw=None, rw=None):
@@ -222,8 +228,12 @@ def recv_thread(my_binding, sw=None, rw=None):
         # 每次传输一个PDU
         binpack, sender_ip = my_binding.recvfrom(PDU.size)
 
-        if not crc_check(binpack):
+        if loss_with_rate(0.2):
+            print("Loss\n", end='')
             continue
+
+        if not crc_check(binpack):
+            print("check crc error\n", end='')
         else:
             seq, ack, info = unpack_pdu(binpack)
 
@@ -251,7 +261,6 @@ class GbnProtocol:
             sw = SendingWindow(self.binding, self.sock, self.file)
             rw = RecvingWindow(self.binding, self.sock)
             self.recv_thread = Thread(target=recv_thread, args=(self.binding, sw, rw))
-
             self.recv_thread.start()
             sw.start()
             rw.start()
@@ -267,36 +276,3 @@ class GbnProtocol:
             rw.start()
         else:
             print("Please choose mode in [0, 1, 2].")
-
-
-ip = '127.0.0.1'  # 服务器ip和端口
-port1, port2, port3, port4 = args.port1, args.port2, args.port3, args.port4
-file1 = ['023a', '134e', '24567y', '34dsfa', '41234s', '52134', '61234ss', 'eeenD', 'ax]=========']
-file2 = ['12', '2313', '2313', '2313']
-
-sock1 = (ip, port1)
-sock2 = (ip, port2)
-sock3 = (ip, port3)
-sock4 = (ip, port4)
-
-binding1 = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-binding2 = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-binding3 = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-binding4 = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
-binding1.getsockname()
-
-binding1.bind(sock1)
-binding2.bind(sock2)
-binding3.bind(sock3)
-binding4.bind(sock4)
-
-a = GbnProtocol(binding1, sock2, file1)
-b = GbnProtocol(binding2, sock1)
-
-a.mode = 1
-b.mode = 2
-
-a.start()
-b.start()
-
