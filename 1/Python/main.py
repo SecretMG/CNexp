@@ -33,7 +33,7 @@ def receiver(binding_to, name):
     while True:
         data = binding_to.recvfrom(data_size)
         if cnt % 1000 == 0:
-            print(cnt)
+            print(f'已接收{cnt}帧\n')
         cnt += 1
         context = data[0]
         _, new_port = data[1]
@@ -66,7 +66,7 @@ def main():
     carl_server = threading.Thread(target=receiver, args=(binding3, 'carl'))
     david_server = threading.Thread(target=receiver, args=(binding4, 'david'))
     alice_client = threading.Thread(target=sender, args=(binding1, sock2, file_in))
-    bob_client = threading.Thread(target=sender, args=(binding2, sock3, file_in))
+    bob_client = threading.Thread(target=sender, args=(binding2, sock1, file_in))
     carl_client = threading.Thread(target=sender, args=(binding3, sock4, file_in))
     david_client = threading.Thread(target=sender, args=(binding4, sock2, file_in))
 
