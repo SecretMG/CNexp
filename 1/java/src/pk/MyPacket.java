@@ -14,7 +14,7 @@ public class MyPacket implements Serializable {
         super();
         this.sequence_num = sequence_num;
         this.data = _data;
-        this.crc = CRC32.getCRC32Checksum(data.getBytes(StandardCharsets.UTF_8));
+        this.crc = CRC32.__get_check_sum(data.getBytes(StandardCharsets.UTF_8));
     }
 
     public String ConvertToString(){

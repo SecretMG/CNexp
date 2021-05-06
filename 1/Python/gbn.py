@@ -7,24 +7,27 @@
 发送窗口-接收线程
 发送窗口-超时控制定时器线程池
 发送窗口-文件读入
+接收窗口
 
 待完成：
-接收窗口
-一些细节
+文件写入接口
 """
 
 from threading import Thread, Timer, Event
 from args import args
-import time
 from pdu import PDU, unpack_pdu, crc_check
-import random
+import socket
+from loss_error import loss_with_rate, error_with_rate
+
 
 class SendingWindow:
     # 发送窗口
-    def __init__(self, filelist):
-        #
+    def __init__(self, my_binding, sendto_sock, filelist):
+        self.mybinding = my_binding
+        self.target = sendto_sock
         self.filelist = filelist
         self.fileptr = args.sending_window_size - 1
+
         # 事件定义
         self.__event_mainthread = Event()
         self.__event_send = Event()
@@ -68,7 +71,7 @@ class SendingWindow:
         #self.__event_recv.clear()
         self.__event_timer.clear()
         self.__event_mainthread.clear()
-        print("停止请求已发送")
+        print("停止请求已发送\n", end='')
 
     def __main_thread(self):
         while True:
@@ -103,12 +106,10 @@ class SendingWindow:
             if (self.last_sent >= -1) and (self.last_sent < args.sending_window_size-1):
                 self.last_sent += 1
                 if self.sw_pdulist[self.last_sent].info != '#':
-                    send_pdu(self.sw_pdulist[self.last_sent])
+                    send_pdu(self.sw_pdulist[self.last_sent], self.mybinding, self.target)
                     self.sw_timeouter[self.last_sent] = Timer(args.time_out/1000, self.__thread_timeout)
                     # print("%d已设置Timer"%self.last_sent)
                     self.sw_timeouter[self.last_sent].start()
-            else:
-                pass
             self.__event_send.clear()
             self.__event_endsend.set()
 
@@ -117,7 +118,7 @@ class SendingWindow:
             self.__event_timer.wait()
             self.__event_timeout.wait()
             # 停止发送和滑动
-            print("等待结束发送滑动线程")
+            print("等待结束发送滑动线程\n", end='')
             self.__event_mainthread.clear()
             self.__event_endsend.wait()
             self.__event_endslide.wait()
@@ -125,7 +126,7 @@ class SendingWindow:
             for i in self.sw_timeouter:
                 if i is not None:
                     i.cancel()
-            print("计数器进程池清理完成")
+            print("计数器线程池清理完成\n", end='')
             self.last_sent = -1
             # 恢复主线程
             self.__event_timeout.clear()
@@ -134,54 +135,58 @@ class SendingWindow:
     def __thread_timeout(self):
         # 超时一定是最先出发的超时，这样更安全
         if self.__event_timeout.is_set():
-            print("已触发")
+            print("已触发\n", end='')
             return
         else:
             self.__event_timeout.set()
-            print("超时触发")
+            print("超时触发\n", end='')
 
     def __thread_slide(self):
         while True:
             self.__event_slide.wait()
-            if (self.last_sent >= 0) and (len(self.sw_recvlist) > 0) and (self.fileptr < len(self.filelist) + args.sending_window_size - 1):
-                if self.sw_recvlist[0] == self.sw_nolist[0]:
-                    print("slide%d"%self.sw_nolist[0])
-                    # nolist向右滑动一位
-                    self.sw_nolist.append(self.sw_nolist.pop(0))
-                    self.last_sent -= 1
-                    # timer向右滑动一位
-                    if self.sw_timeouter[0] is not None:
-                        self.sw_timeouter[0].cancel()
-                    self.sw_timeouter.pop(0)
-                    self.sw_timeouter.append(None)
-                    # PDU向右滑动一位
-                    self.sw_pdulist.append(self.sw_pdulist.pop(0))
+            # 文件未读完
+            if self.fileptr < len(self.filelist) + args.sending_window_size - 1 and (len(self.sw_recvlist) > 0):
+                # 是否滑动
+                if self.sw_recvlist[0] in self.sw_nolist[0:self.last_sent+1]:
+                    slide_times = self.sw_nolist.index(self.sw_recvlist[0], 0, self.last_sent+1) + 1
+                    for i in range(slide_times):
+                        print("\033[7mslide%d\033[0m\n" % self.sw_nolist[0], end='')
+                        # timer向右滑动一位
+                        if self.sw_timeouter[0] is not None:
+                            self.sw_timeouter[0].cancel()
+                        self.sw_timeouter.pop(0)
+                        self.sw_timeouter.append(None)
+                        # nolist向右滑动一位
+                        self.sw_nolist.append(self.sw_nolist.pop(0))
+                        self.last_sent -= 1
+                        # PDU向右滑动一位
+                        self.sw_pdulist.append(self.sw_pdulist.pop(0))
 
-                    self.fileptr += 1
-                    if self.fileptr + 1 > len(self.filelist):
-                        self.sw_pdulist[-1].update(seq=self.sw_nolist[-1], info='#')
-                    else:
-                        self.sw_pdulist[-1].update(seq=self.sw_nolist[-1], info=self.filelist[self.fileptr])
-                else:
-                    self.sw_recvlist.pop(0)
-            else:
-                # 无效包
-                pass
+                        self.fileptr += 1
+                        if self.fileptr + 1 > len(self.filelist):
+                            self.sw_pdulist[-1].update(seq=self.sw_nolist[-1], info='#')
+                        else:
+                            self.sw_pdulist[-1].update(seq=self.sw_nolist[-1], info=self.filelist[self.fileptr])
+            self.sw_recvlist.pop(0)
             self.__event_slide.clear()
             self.__event_endslide.set()
 
 
 class RecvingWindow:
     # 接收窗口
-    def __init__(self):
+    def __init__(self, my_binding, sendto_sock):
         # 事件定义
+        self.my_binding = my_binding
+        self.target = sendto_sock
         self.__event_mainthread = Event()
         # 主线程
         self.__thread_main = Thread(target=self.__main_thread)
         # 接收窗口
         self.rw_needack = 0
-        # 反馈包
-        self.rw_pdu = PDU()
+        # seq&info
+        self.seq_and_info = []
+        # 接收到的信息
+        self.recv_info = []
 
     def start(self):
         self.__thread_main.start()
@@ -194,52 +199,80 @@ class RecvingWindow:
         while True:
             self.__event_mainthread.wait()
 
-            # recv
-            # 验错
-            # 获得pdu
-            # 比较seq与needack
+            if len(self.seq_and_info) != 0:
+                seq, info = self.seq_and_info.pop(0)
+                if seq == self.rw_needack:
+                    self.recv_info.append(info)
+                    pass                # info写入文件接口
+                    self.rw_needack = (seq+1) % args.sending_window_size
+                    # 发送反馈
+                p = PDU(ack=seq, info='ACK PACKET')
+                send_pdu(p, self.my_binding, self.target)
+                print("sendack%d\n"%seq, end='')
 
-            seq = random.randint(0, 3)
-            if seq == self.rw_needack:
-                # pdu.info写入
-                self.rw_needack = (seq+1) % args.sending_window_size
-                # 发送反馈
-                self.rw_pdu.update(ack=seq)
-                print("sendack%d"%seq)
-                # send(pdu.binpack)
-            else:
-                # 丢弃pdu
-                pass
+    def get_seq_and_info(self, seq, info):
+        self.seq_and_info.append((seq, info))
 
 
-def send_pdu(pdu):
-    print("sentpdu:seq=%d, info=%s" % (pdu.seq, pdu.info))
+def send_pdu(pdu, my_binding, target_sock):
+    print("sentpdu:seq=%d, ack=%d info=%s\n" % (pdu.seq, pdu.ack, pdu.info), end='')
 
-def recv_thread(sw, rw):
-    # 处理
+    send_pack = error_with_rate(0.2, pdu.bin_pack)
+    my_binding.sendto(send_pack, target_sock)
+
+
+def recv_thread(my_binding, sw=None, rw=None):
+    # 接收PDU并将PDU分类（Ack回执包或接受的数据包）
+    # 待完善：结束处理
     while True:
-        # pdu = unpack_pdu()
-        ack = random.randint(0, 3)
-        # 分类
-        time.sleep(0.05)
-        sw.get_ack(ack)
+        # 每次传输一个PDU
+        binpack, sender_ip = my_binding.recvfrom(PDU.size)
+
+        if loss_with_rate(0.2):
+            print("Loss\n", end='')
+            continue
+
+        if not crc_check(binpack):
+            print("check crc error\n", end='')
+        else:
+            seq, ack, info = unpack_pdu(binpack)
+
+            if seq == -1 and sw is not None:
+                # ack包
+                sw.get_ack(ack)
+            elif ack == -1 and rw is not None:
+                # 数据包
+                rw.get_seq_and_info(seq, info)
 
 
-def client():
-    file = ['023a', '134e', '24567y', '34dsfa', '41234s', '52134', '61234ss', 'eeenD' ,'ax]=========']
-    # 发送窗口实例化
-    sw = SendingWindow(file)
-    rw = RecvingWindow()
+class GbnProtocol:
+    """
+    Gbn协议（双向通信）
+    mode:    0:发送+接收    1：只发送    2：只接收
+    """
+    def __init__(self, my_binding, target_sock, file_list=[]):
+        self.binding = my_binding
+        self.sock = target_sock
+        self.file = file_list
+        self.mode = -1
 
-
-    # 开始发送线程
-    sw.start()
-
-    recv_thread(sw,rw)
-    # rw = RecvingWindow()
-    # rw.start()
-    # rw.stop()
-    sw.stop()
-
-
-client()
+    def start(self):
+        if self.mode == 0:
+            sw = SendingWindow(self.binding, self.sock, self.file)
+            rw = RecvingWindow(self.binding, self.sock)
+            self.recv_thread = Thread(target=recv_thread, args=(self.binding, sw, rw))
+            self.recv_thread.start()
+            sw.start()
+            rw.start()
+        elif self.mode == 1:
+            sw = SendingWindow(self.binding, self.sock, self.file)
+            self.recv_thread = Thread(target=recv_thread, args=(self.binding, sw, None))
+            self.recv_thread.start()
+            sw.start()
+        elif self.mode == 2:
+            rw = RecvingWindow(self.binding, self.sock)
+            self.recv_thread = Thread(target=recv_thread, args=(self.binding, None, rw))
+            self.recv_thread.start()
+            rw.start()
+        else:
+            print("Please choose mode in [0, 1, 2].")

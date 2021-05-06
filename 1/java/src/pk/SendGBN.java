@@ -2,15 +2,20 @@ package pk;
 
 import java.io.*;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
+import java.util.Objects;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import static pk.Serializer.serializer;
 
 public class SendGBN{
     //constants
-    public static byte N = 10;              //the N from "Go-Back-N"
-    public static byte MAX_SEQ_NUMBER = 20; //The maximum sequence number
+    public static byte N = 5;              //the N from "Go-Back-N"
+    public static byte MAX_SEQ_NUMBER = 10; //The maximum sequence number
     public static int PORT = 7609;          //the receiver's port
     public static int DELAY = 1000;         //1 second delay for timeout
+    public static final int BYTES_PER_PACKET = 1024;
 
     //the socket
     DatagramSocket socket;
@@ -18,14 +23,37 @@ public class SendGBN{
     InetAddress ipAddress;
 
     //variables from the algorithm
-    byte base = 1;
-    byte nextSeqNum = 1;
+    byte base = 0;
+    byte nextSeqNum = 0;
 
     //needed for receiver thread
     volatile boolean done = false;
+    volatile boolean timeout = false;
 
     //number of packets sent, but unacknowledged
     int unAckedPackets = 0;
+
+    // timer
+    Timer timer = new Timer();
+
+    // buffer
+    String [] windowbuffer = new String[MAX_SEQ_NUMBER];
+
+    public void ResetTimer(){
+        timer.cancel();
+        timer = new Timer();
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                System.out.println("timeout!");
+                try {
+                    timeOut();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        },DELAY);
+    }
 
     //////////////////////////////
     //
@@ -76,18 +104,26 @@ public class SendGBN{
         BufferedReader in =
                 new BufferedReader(new InputStreamReader(System.in));
 
-        System.out.println("Enter some text, to end place a . on a line alone.");
+        // System.out.println("Enter some text, to end place a . on a line alone.");
 
-        String line = null;
-        while((line = in.readLine()) != null && !(line.equals("."))){
-                //wait until the queue is no longer full
-                while(unAckedPackets == N){
-                    //we can do this because we will be running other threads
-                    //we'll give them a chance to run
-                    Thread.yield();
-                }
+        File file = new File("D:\\learn\\2021\\Network\\labs\\lab1_gbn\\test.txt");
 
-                sendPacket(line);
+        BufferedReader br = new BufferedReader(new FileReader(file));
+
+        ResetTimer();
+
+        String line;
+        while ((line = br.readLine()) != null){
+            //wait until the queue is no longer full
+            while(unAckedPackets == N){
+                //we can do this because we will be running other threads
+                //we'll give them a chance to run
+                Thread.yield();
+            }
+
+            System.out.println("read line:"+line);
+
+            sendPacket(line);
 
             ///////////////////////////////////////////
             //
@@ -95,9 +131,14 @@ public class SendGBN{
             // send an end of line character
             //
         }
+        while(base+1 != nextSeqNum || timeout || unAckedPackets != 0) {
+            Thread.yield();
+        }
         done = true;
+        timer.cancel();
         socket.close();
         System.out.println("Done!");
+        System.exit(0);
     }
 
     /*
@@ -120,10 +161,16 @@ public class SendGBN{
         //
         // See the book
         //
-        MyPacket udp_pkt = new MyPacket(nextSeqNum++, line);
+        windowbuffer[nextSeqNum] = line;
+        System.out.println("send packet seq" + nextSeqNum);
+        unAckedPackets++;
+        System.out.println("unacked" + unAckedPackets);
+        MyPacket udp_pkt = new MyPacket(nextSeqNum, line);
+        nextSeqNum = (byte)((nextSeqNum + 1) % MAX_SEQ_NUMBER);
         byte[] buf = serializer.toBytes(udp_pkt);
         DatagramPacket pkt = new DatagramPacket(buf, buf.length, ipAddress, PORT);
         socket.send(pkt);
+
     }
 
     public synchronized void receivePacket(DatagramPacket ack){
@@ -135,9 +182,29 @@ public class SendGBN{
         // See the book
         //
 
+        byte[] acknum = ack.getData();
+        // get ack of base packet, base + 1
+        if(acknum[0] == (byte)((base+1)%MAX_SEQ_NUMBER)){
+            windowbuffer[base] = null;
+
+            unAckedPackets -= 1;
+            base = acknum[0];
+
+            // reset timer
+            ResetTimer();
+
+            // debug print
+            System.out.println("sender get ack" + acknum[0]);
+            System.out.println("base:" + base);
+        }
+        else {
+            System.out.println("sender discard ack" + acknum[0]);
+            System.out.println("base:" + base);
+        }
+
     }
 
-    public synchronized void timeOut(){
+    public synchronized void timeOut() throws IOException {
         ///////////////////////////////////////////
         //
         // Process a message from the timer.
@@ -145,29 +212,51 @@ public class SendGBN{
         //
         // See the book
         //
+
+        timeout = true;
+        nextSeqNum = base;
+        unAckedPackets = 0;
+
+        ResetTimer();
+
+        for(int i = 0; i < N; i++) {
+            if(windowbuffer[nextSeqNum] == null){
+                break;
+            }
+            while(unAckedPackets == N){
+                Thread.yield();
+            }
+            System.out.println("resend packet seq" + nextSeqNum);
+            sendPacket(windowbuffer[nextSeqNum]);
+        }
+
+        timeout = false;
     }
 
 
     class ACKListener extends Thread{
         public void run(){
-//            try{
+            try{
                 while(!done){
                     //listen for packet
-                    DatagramPacket ack = null;
+                    byte[] receiveData = new byte[BYTES_PER_PACKET];
+                    DatagramPacket ack = new DatagramPacket(receiveData, receiveData.length);
 
                     ///////////////////////////////////////////
                     //
                     // Get an incoming ACK packet
                     //
+                    socket.receive(ack);
 
                     //process it
                     receivePacket(ack);
+
                 }
-//            }
-//            catch(IOException ioe){
-//                //Will enter here if the thread is listening for a packet
-//                //when we quit, and that's ok.
-//            }
+            }
+            catch(IOException ioe){
+                //Will enter here if the thread is listening for a packet
+                //when we quit, and that's ok.
+            }
 
         }
     }
