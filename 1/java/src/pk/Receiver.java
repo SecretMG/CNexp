@@ -12,7 +12,7 @@ import static pk.Serializer.serializer;
 
 
 public class Receiver extends JPanel implements Runnable{
-    public static final int BYTES_PER_PACKET = 1024;
+    public static final int BYTES_PER_PACKET = 4096;
     public static final int PORT = 7609;
     public static final String LOST = "LOST";
     public static final String RCVD = "RCVD";
@@ -40,11 +40,12 @@ public class Receiver extends JPanel implements Runnable{
         p1.add(new JLabel("Packet Loss (0..1)"));
         prob = new JTextField(10);
         p1.add(prob);
-        prob.setText("0.3");
+        prob.setText("0");
         p1.add(new JLabel(" MAX SEQ NUM"));
         N = new JTextField(10);
         p1.add(N);
-        N.setText("10");
+        N.setText("100");
+
         add("North", p1);
 
         //column header for the table
@@ -91,12 +92,13 @@ public class Receiver extends JPanel implements Runnable{
     public void run(){
         byte expectedSequenceNumber = 0;
         //ack for packet 0 (not initially sent)
-        DatagramPacket ack = new DatagramPacket(new byte[]{0}, 1);
+        byte[] dataa = new byte[BYTES_PER_PACKET];
+        DatagramPacket ack = new DatagramPacket(dataa, BYTES_PER_PACKET);
         while(!done){
             //get the next packet
+
             byte[] data = new byte[BYTES_PER_PACKET];
-            DatagramPacket rp = new DatagramPacket(data,
-                    BYTES_PER_PACKET);
+            DatagramPacket rp = new DatagramPacket(data, BYTES_PER_PACKET);
             try{
                 //receive the packet
                 //System.err.println("Waiting.");
@@ -125,27 +127,45 @@ public class Receiver extends JPanel implements Runnable{
             packets.add(pack);
 
             if(success){
-                String ackMsg = RSNT;
-
+                String ackMsg;
+                MyPacket udp_ack;
+                byte[] udp_ack_bytes = null;
                 //if we got the packet we expected
                 if(pack.id == expectedSequenceNumber){
-                    //increase the expectedSeqNum mod N
-                    //get the value of N
-                    byte n = Byte.parseByte(N.getText());
-                    expectedSequenceNumber =
-                            (byte)((expectedSequenceNumber + 1) % n);
-
-                    //set the appropriate acknowledgment id
-                    ack.setData(new byte[] {expectedSequenceNumber});
-
-                    //update the text area (send data to application)
-//                    text.append("" + pack.data.toString());
                     ackMsg = SENT;
+
+                    pack.OuttoTxt(pack.line);
+
+                    udp_ack = new MyPacket(-1,expectedSequenceNumber,null);
+                    System.out.println("right ack: "+expectedSequenceNumber);
+                    System.out.println("");
+                    try {
+                        udp_ack_bytes = serializer.toBytes(udp_ack);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    ack.setData(udp_ack_bytes);
+
+                    expectedSequenceNumber = (byte)((expectedSequenceNumber + 1) % Byte.parseByte(N.getText()));
+                }
+                else{
+                    ackMsg = RSNT;
+
+                    udp_ack = new MyPacket(-1,(byte)((expectedSequenceNumber - 1) % Byte.parseByte(N.getText())),null);
+                    System.out.println("wrong ack: "+(byte)((expectedSequenceNumber - 1) % Byte.parseByte(N.getText())));
+                    System.out.println("");
+
+                    try {
+                        udp_ack_bytes = serializer.toBytes(udp_ack);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    ack.setData(udp_ack_bytes);
+
                 }
 
-
-                //SEND acknowledgement
-                //send ASK back to host that sent the packet.
                 ack.setAddress(rp.getAddress());
                 ack.setPort(rp.getPort());
 
@@ -159,7 +179,6 @@ public class Receiver extends JPanel implements Runnable{
                     System.err.println("IOException occurred " +
                             "while sending!");
                 }
-
             }
 
 
@@ -209,33 +228,77 @@ class PacketPocket extends Vector{
     DatagramPacket packet;
     byte id;
     byte[] data;
-
+    byte[] ndata = null;
+    String line =null;
     public PacketPocket(DatagramPacket p, String status, PacketType type) {
+
         this.packet = p;
         this.data = p.getData();
+        this.line = null;
         add(status);
         add(packet.getAddress());
         add(packet.getPort());
         // recieve data packet
         if(type == PacketType.DATA){
+            if (CRC.crc_check(this.data))
+                System.out.println("没啥错误");
+            else
+                System.out.println("错了");
+
+            this.ndata = new byte[this.data.length - 2];
+            System.arraycopy(this.data,0,this.ndata,0,this.data.length-2);
+
             MyPacket pkt = null;
             // deserialize
-            try{
-                pkt = (MyPacket) serializer.toObject(data);
-            } catch (ClassNotFoundException | IOException e){
-                System.err.println("class not found error.\n");
+            try {
+                pkt = (MyPacket) serializer.toObject(ndata);
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
             }
-            System.out.println("Packet with sequence number " + pkt.sequence_num
-                    + " received");
+            System.out.println("Packet with sequence number " + pkt.sequence_num + " received");
+            System.out.println("");
             this.id = (byte) pkt.sequence_num;
+            this.line = pkt.data;
             add(pkt.sequence_num);
             add(pkt.data);
         }
         // ack packet
         else if(type == PacketType.ACK){
-            id = data[0];
+            MyPacket pkt = null;
+            // deserialize
+            try {
+                pkt = (MyPacket) serializer.toObject(data);
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+            id = pkt.ackk;
             add(id);
             add("---");
+        }
+
+    }
+
+    public static BufferedWriter writer;
+
+    static {
+        try {
+            writer = new BufferedWriter(new FileWriter("E:\\received.txt"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    public void OuttoTxt(String line){
+        System.out.println("received line  "+line);
+        try {
+            writer.write(line);
+            writer.newLine();
+            writer.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
     }
