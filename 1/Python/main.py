@@ -67,6 +67,7 @@ def main():
 
     a = GbnProtocol(binding1, sock2, file1)
     b = GbnProtocol(binding2, sock1, file2)
+
     # 双工
     a.mode = 0
     b.mode = 0
