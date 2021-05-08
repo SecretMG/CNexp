@@ -1,20 +1,20 @@
 package pk;
 
-import pk.CRC32;
+import pk.CRC;
 
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 
 public class MyPacket implements Serializable {
     int sequence_num;
+    byte ackk;
     String data;
-    long crc;
 
-    public MyPacket(int sequence_num, String _data){
+    public MyPacket(int sequence_num, byte ack, String _data){
         super();
         this.sequence_num = sequence_num;
+        this.ackk = ack;
         this.data = _data;
-        this.crc = CRC32.__get_check_sum(data.getBytes(StandardCharsets.UTF_8));
     }
 
     public String ConvertToString(){

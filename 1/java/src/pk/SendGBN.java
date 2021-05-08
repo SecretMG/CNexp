@@ -7,15 +7,16 @@ import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import static java.lang.Thread.sleep;
 import static pk.Serializer.serializer;
 
 public class SendGBN{
     //constants
     public static byte N = 5;              //the N from "Go-Back-N"
-    public static byte MAX_SEQ_NUMBER = 10; //The maximum sequence number
+    public static byte MAX_SEQ_NUMBER = 100; //The maximum sequence number
     public static int PORT = 7609;          //the receiver's port
-    public static int DELAY = 1000;         //1 second delay for timeout
-    public static final int BYTES_PER_PACKET = 1024;
+    public static int DELAY = 10;         //1 second delay for timeout
+    public static final int BYTES_PER_PACKET = 4096;
 
     //the socket
     DatagramSocket socket;
@@ -33,7 +34,7 @@ public class SendGBN{
     //number of packets sent, but unacknowledged
     int unAckedPackets = 0;
 
-    // timer
+    //timer
     Timer timer = new Timer();
 
     // buffer
@@ -101,12 +102,11 @@ public class SendGBN{
     //deals with getting the data from the user to send
     public void processUserData() throws IOException{
         //create input reading mechanism
-        BufferedReader in =
-                new BufferedReader(new InputStreamReader(System.in));
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
 
         // System.out.println("Enter some text, to end place a . on a line alone.");
 
-        File file = new File("D:\\learn\\2021\\Network\\labs\\lab1_gbn\\test.txt");
+        File file = new File("E:\\stan.txt");
 
         BufferedReader br = new BufferedReader(new FileReader(file));
 
@@ -115,15 +115,15 @@ public class SendGBN{
         String line;
         while ((line = br.readLine()) != null){
             //wait until the queue is no longer full
-            while(unAckedPackets == N){
+            while(unAckedPackets == N || timeout){
                 //we can do this because we will be running other threads
                 //we'll give them a chance to run
                 Thread.yield();
             }
 
-            System.out.println("read line:"+line);
+            System.out.println("read line:                              "+ line);
 
-            sendPacket(line);
+            sendPacket(line,0);
 
             ///////////////////////////////////////////
             //
@@ -131,7 +131,7 @@ public class SendGBN{
             // send an end of line character
             //
         }
-        while(base+1 != nextSeqNum || timeout || unAckedPackets != 0) {
+        while(base != nextSeqNum || timeout || unAckedPackets != 0) {
             Thread.yield();
         }
         done = true;
@@ -152,7 +152,7 @@ public class SendGBN{
      * their methods
      */
 
-    public synchronized void sendPacket(String line) throws IOException{
+    public synchronized void sendPacket(String line,int from) throws IOException{
         ///////////////////////////////////////////
         //
         // Turn the char c into a packet and send it off.
@@ -161,15 +161,38 @@ public class SendGBN{
         //
         // See the book
         //
+
         windowbuffer[nextSeqNum] = line;
+
+//        for (int ads = 0;ads<10;ads++)System.out.println(windowbuffer[ads]);
         System.out.println("send packet seq" + nextSeqNum);
         unAckedPackets++;
         System.out.println("unacked" + unAckedPackets);
-        MyPacket udp_pkt = new MyPacket(nextSeqNum, line);
-        nextSeqNum = (byte)((nextSeqNum + 1) % MAX_SEQ_NUMBER);
-        byte[] buf = serializer.toBytes(udp_pkt);
+        System.out.println("");
+
+        MyPacket udp_pkt = new MyPacket(nextSeqNum, (byte) -1,line);
+        byte[] udp_pkt_bytes = serializer.toBytes(udp_pkt);
+        byte[] buf = CRC.__init__(udp_pkt_bytes);
         DatagramPacket pkt = new DatagramPacket(buf, buf.length, ipAddress, PORT);
+
+        if (from == 0 && nextSeqNum == 77){
+            nextSeqNum = (byte)((nextSeqNum + 1) % MAX_SEQ_NUMBER);
+            return;
+        }
+
         socket.send(pkt);
+
+        nextSeqNum = (byte)((nextSeqNum + 1) % MAX_SEQ_NUMBER);
+
+//        if (nextSeqNum == base){
+//            TimeModel.setTime(DELAY);
+//        }
+
+//        try {
+//            sleep(0,1);
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
 
     }
 
@@ -183,23 +206,37 @@ public class SendGBN{
         //
 
         byte[] acknum = ack.getData();
-        // get ack of base packet, base + 1
-        if(acknum[0] == (byte)((base+1)%MAX_SEQ_NUMBER)){
-            windowbuffer[base] = null;
 
+        MyPacket ackn = null;
+
+        try {
+            ackn = (MyPacket) serializer.toObject(acknum);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        byte flag = base ;
+        base = (byte) ((ackn.ackk + 1) % MAX_SEQ_NUMBER);
+
+        if (base != flag){
+
+            windowbuffer[ackn.ackk] = null;
+
+//            for (int ads = 0;ads<10;ads++)System.out.println(windowbuffer[ads]);
             unAckedPackets -= 1;
-            base = acknum[0];
-
             // reset timer
             ResetTimer();
 
             // debug print
-            System.out.println("sender get ack" + acknum[0]);
+            System.out.println("sender get ack" + ackn.ackk);
             System.out.println("base:" + base);
+            System.out.println("");
         }
         else {
-            System.out.println("sender discard ack" + acknum[0]);
+            System.out.println("sender discard ack" + ackn.ackk);
             System.out.println("base:" + base);
+            System.out.println("");
         }
 
     }
@@ -212,12 +249,13 @@ public class SendGBN{
         //
         // See the book
         //
-
         timeout = true;
+        System.out.println(nextSeqNum);
+//        for (int ads = 0;ads<10;ads++)System.out.println(windowbuffer[ads]);
         nextSeqNum = base;
         unAckedPackets = 0;
-
-        ResetTimer();
+//
+//        ResetTimer();
 
         for(int i = 0; i < N; i++) {
             if(windowbuffer[nextSeqNum] == null){
@@ -226,9 +264,12 @@ public class SendGBN{
             while(unAckedPackets == N){
                 Thread.yield();
             }
-            System.out.println("resend packet seq" + nextSeqNum);
-            sendPacket(windowbuffer[nextSeqNum]);
+            System.out.println("resend packet seq" + nextSeqNum + " :                      " + windowbuffer[nextSeqNum]);
+            System.out.println("");
+            sendPacket(windowbuffer[nextSeqNum],1);
+
         }
+
 
         timeout = false;
     }
