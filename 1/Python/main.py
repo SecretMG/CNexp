@@ -5,7 +5,7 @@ import socket
 import threading
 import time
 import os
-from gbn import GbnProtocol
+from gbn import SendingWindow
 
 from args import args
 from utils import *
@@ -18,13 +18,16 @@ port1, port2, port3, port4 = args.port1, args.port2, args.port3, args.port4
 data_size = args.data_size
 
 def sender(binding_from, sock_to, file):
+    content = [file.encode()]
     with open(file, 'rb') as f:
         while True:
             time.sleep(1e-2)    # significant
             data = f.read(data_size)
-            binding_from.sendto(data, sock_to)
+            content.append(data)
+            # binding_from.sendto(data, sock_to)
             if data == b'':
                 break
+    sw = SendingWindow(binding_from, sock_to, content)
     print('sender close')
 
 
@@ -62,27 +65,6 @@ def main():
     binding3.bind(sock3)
     binding4.bind(sock4)
 
-    file1 = ['023a', '134e', '24567y', '34dsfa', '41234s', '52134', '61234ss', 'eeenD', 'ax]=========']
-    file2 = ['123123', '2341234', '3到底是谁', '4ADSF']
-
-    a = GbnProtocol(binding1, sock2, file1)
-    b = GbnProtocol(binding2, sock1, file2)
-
-    # 双工
-    # a.mode = 0
-    # b.mode = 0
-
-    # 单工，a将file1发送给b
-    a.mode = 1
-    b.mode = 2
-
-    a.start()
-    time.sleep(0.5)
-    b.start()
-
-
-
-'''
     alice_server = threading.Thread(target=receiver, args=(binding1, 'alice'))
     bob_server = threading.Thread(target=receiver, args=(binding2, 'bob'))
     carl_server = threading.Thread(target=receiver, args=(binding3, 'carl'))
@@ -92,11 +74,12 @@ def main():
     carl_client = threading.Thread(target=sender, args=(binding3, sock4, file_in))
     david_client = threading.Thread(target=sender, args=(binding4, sock2, file_in))
 
-    alice_server.start(), alice_client.start()
-    bob_server.start(), bob_client.start()
-    carl_server.start(), carl_client.start()
-    david_server.start(), david_client.start()
-'''
+    # alice_server.start(), alice_client.start()
+    # bob_server.start(), bob_client.start()
+    # carl_server.start(), carl_client.start()
+    # david_server.start(), david_client.start()
+
+    alice_client.start()
 
 if __name__ == '__main__':
     main()
