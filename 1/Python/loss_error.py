@@ -31,7 +31,7 @@ def error_with_rate(rate, binpack):
     """
     if random() <= rate:
         rt = bytearray(binpack)
-        rt[0] ^= 0xFF
+        rt[0] ^= 0xFF   # 取反
         return rt
     else:
         return binpack

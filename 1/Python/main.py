@@ -69,12 +69,12 @@ def main():
     b = GbnProtocol(binding2, sock1, file2)
 
     # 双工
-    a.mode = 0
-    b.mode = 0
+    # a.mode = 0
+    # b.mode = 0
 
-    # 单工
-    # a.mode = 1
-    # b.mode = 2
+    # 单工，a将file1发送给b
+    a.mode = 1
+    b.mode = 2
 
     a.start()
     time.sleep(0.5)
