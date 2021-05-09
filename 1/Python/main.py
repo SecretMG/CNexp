@@ -5,7 +5,7 @@ import socket
 import threading
 import time
 import os
-from gbn import SendingWindow
+from gbn import SendingWindow, RecvingWindow, recv_thread
 
 from args import args
 from utils import *
@@ -17,18 +17,21 @@ ip = '127.0.0.1'  # 服务器ip和端口
 port1, port2, port3, port4 = args.port1, args.port2, args.port3, args.port4
 data_size = args.data_size
 
+
 def sender(binding_from, sock_to, file):
     content = [file.encode()]
     with open(file, 'rb') as f:
         while True:
-            time.sleep(1e-2)    # significant
+            # time.sleep(1e-2)    # significant
             data = f.read(data_size)
             content.append(data)
             # binding_from.sendto(data, sock_to)
             if data == b'':
                 break
+    print("共发送%d个包" % len(content))
     sw = SendingWindow(binding_from, sock_to, content)
     print('sender close')
+    return sw
 
 
 def receiver(binding_to, name):
@@ -65,6 +68,7 @@ def main():
     binding3.bind(sock3)
     binding4.bind(sock4)
 
+    """
     alice_server = threading.Thread(target=receiver, args=(binding1, 'alice'))
     bob_server = threading.Thread(target=receiver, args=(binding2, 'bob'))
     carl_server = threading.Thread(target=receiver, args=(binding3, 'carl'))
@@ -78,8 +82,33 @@ def main():
     # bob_server.start(), bob_client.start()
     # carl_server.start(), carl_client.start()
     # david_server.start(), david_client.start()
+    """
 
-    alice_client.start()
+    # a的发送窗口
+    alice_to_bob_sw = sender(binding1, sock2, file_in)
+    # a的接收线程 这里用的是gbn中的receiver
+    alice_receiver = threading.Thread(target=recv_thread, args=(binding1, alice_to_bob_sw, None))
+    # b的接收窗口
+    bob_from_alice_rw = RecvingWindow(binding2, sock1)
+    # b的接收线程 这里用的是gbn中的receiver
+    bob_receiver = threading.Thread(target=recv_thread, args=(binding2, None, bob_from_alice_rw))
+
+    # 全部开始
+    alice_to_bob_sw.start()
+    alice_receiver.start()
+    bob_from_alice_rw.start()
+    bob_receiver.start()
+
+    # 还没有结束处理，所以只能强行停止 todo：改进结束处理
+    time.sleep(90)
+    alice_to_bob_sw.stop()
+    bob_from_alice_rw.stop()
+    # 还没办法停止receiver todo:重写receiver
+
+    # 拼接字符串
+    str = b''.join(bob_from_alice_rw.recv_info)
+    print(str.decode())
+
 
 if __name__ == '__main__':
     main()

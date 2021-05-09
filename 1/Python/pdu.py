@@ -105,7 +105,7 @@ class PDU:
         self.ack = ack
         self.info = info
         self.check_num = self.__get_check_sum()
-        self.bin_pack = struct.pack('>hh%dsH' % args.data_size, seq, ack, info.encode('utf-8'), self.check_num)
+        self.bin_pack = struct.pack('>hh%dsH' % args.data_size, seq, ack, info, self.check_num)
 
     def update(self, seq=-1, ack=-1, info=''):
         if seq == -1:
@@ -120,7 +120,7 @@ class PDU:
         # CRC16‐CCITT 计算self.check_num
         # 查表法 多项式1021
 
-        pre_bin_pack = struct.pack('>hh%ds' % args.data_size, self.seq, self.ack, self.info.encode('utf-8'))
+        pre_bin_pack = struct.pack('>hh%ds' % args.data_size, self.seq, self.ack, self.info)
         crc = 0
         for i in range(len(pre_bin_pack)):
             crc = crc_list[((crc >> 8) ^ pre_bin_pack[i]) & 0xFF] ^ (crc << 8) % (0xFFFF + 1)
