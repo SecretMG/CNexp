@@ -19,6 +19,7 @@ data_size = args.data_size
 
 
 def sender(binding_from, sock_to, file):
+    '''读文件，调用SW发送'''
     content = [file.encode()]
     with open(file, 'rb') as f:
         while True:
@@ -84,14 +85,10 @@ def main():
     # david_server.start(), david_client.start()
     """
 
-    # a的发送窗口
-    alice_to_bob_sw = sender(binding1, sock2, file_in)
-    # a的接收线程 这里用的是gbn中的receiver
-    alice_receiver = threading.Thread(target=recv_thread, args=(binding1, alice_to_bob_sw, None))
-    # b的接收窗口
-    bob_from_alice_rw = RecvingWindow(binding2, sock1)
-    # b的接收线程 这里用的是gbn中的receiver
-    bob_receiver = threading.Thread(target=recv_thread, args=(binding2, None, bob_from_alice_rw))
+    alice_to_bob_sw = sender(binding1, sock2, file_in)  # a的发送窗口
+    alice_receiver = threading.Thread(target=recv_thread, args=(binding1, alice_to_bob_sw, None))   # a的接收线程 这里用的是gbn中的receiver
+    bob_from_alice_rw = RecvingWindow(binding2, sock1)  # b的接收窗口
+    bob_receiver = threading.Thread(target=recv_thread, args=(binding2, None, bob_from_alice_rw))   # b的接收线程 这里用的是gbn中的receiver
 
     # 全部开始
     alice_to_bob_sw.start()
@@ -107,7 +104,7 @@ def main():
 
     # 拼接字符串
     str = b''.join(bob_from_alice_rw.recv_info)
-    print(str.decode())
+
 
 
 if __name__ == '__main__':
