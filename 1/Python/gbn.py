@@ -19,8 +19,8 @@ from pdu import PDU, unpack_pdu, crc_check
 import socket
 from loss_error import loss_with_rate, error_with_rate
 
-error_rate = 0.01
-loss_rate = 0.01
+error_rate = 0.1
+loss_rate = 0.1
 
 def send_pdu(pdu, my_binding, target_sock):
     print("%s send pdu to %s:seq=%d, ack=%d info=%s\n" % (str(my_binding.getsockname()), str(target_sock), pdu.seq, pdu.ack, pdu.info[0:10]), end='')
@@ -245,7 +245,9 @@ def recv_thread(my_binding, sw=None, rw=None):
 
         if loss_with_rate(loss_rate):
             # 以0.2的几率丢失一个数据包
-            print("Loss\n", end='')
+
+            seq, ack, info = unpack_pdu(binpack)  # 解码数据包
+            print("Loss: seq=%d ack=%d\n"%(seq, ack), end='')
             continue
 
         if not crc_check(binpack):
