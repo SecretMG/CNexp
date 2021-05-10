@@ -243,6 +243,7 @@ def recv_thread(my_binding, sw=None, rw=None):
         # 每次传输一个PDU
         binpack, sender_ip = my_binding.recvfrom(PDU.size)  # 仅接收PDU帧的大小
 
+
         if loss_with_rate(loss_rate):
             # 以0.2的几率丢失一个数据包
 
