@@ -28,7 +28,6 @@ def get_sw(my_binding, sock_to, file):
             # time.sleep(1e-2)    # significant
             data = f.read(data_size)
             content.append(data)
-            my_binding.sendto(data, sock_to)
             if data == b'':
                 break
     print("共发送%d个包" % len(content))
@@ -40,8 +39,8 @@ def receiver(name, my_binding, sws):
     '注意需要知道本端口所有的sender_windows'
     for port in sws:
         sws[port].start()  # 开启传输窗口
-    all_ports = {}  # 记录是否是一个新端口向我方传输文件
-    rws = []  # 本端口为每个信道对岸都建立一个rw
+    all_ports = []  # 记录是否是一个新端口向我方传输文件
+    rws = {}  # 本端口为每个信道对岸都建立一个rw
     cnt = 0
     while True:
         cnt += 1
@@ -60,9 +59,13 @@ def receiver(name, my_binding, sws):
         '''此时可以认为是正确的数据包'''
         port = sender_ip[1]
         if port not in all_ports:
+            all_ports.append(port)  # 加到数组里
             rws[port] = RecvingWindow(my_binding, (ip, port))
             rws[port].start()
 
+        # 无意义包
+        if seq == -1 and ack == -1:
+            continue
         # ack包
         if seq == -1:
             print('\nack\n')    # noshow
@@ -73,8 +76,8 @@ def receiver(name, my_binding, sws):
             rws[port].get_seq_and_info(seq, info)
 
         # 拼接字符串
-        str = b''.join(rws[port].recv_info)
-        print(str)
+        # str = b''.join(rws[port].recv_info)
+        # print(str)
 
         # context = data[0]
         # _, new_port = data[1]
@@ -120,7 +123,7 @@ def main():
 
     alice_sws, bob_sws, carl_sws, david_sws = {}, {}, {}, {}
     alice_sws[port2] = get_sw(binding1, sock2, file_in)     # a to b
-    alice_sws[port3] = get_sw(binding1, sock3, file_in)    # a to c
+    # alice_sws[port3] = get_sw(binding1, sock3, file_in)    # a to c
     bob_sws[port1] = get_sw(binding2, sock1, file_in)     # b to a
 
     alice_server = threading.Thread(target=receiver, args=('alice', binding1, alice_sws))
