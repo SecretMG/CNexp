@@ -230,6 +230,10 @@ class RecvingWindow:
 
             if len(self.seq_and_info) != 0:
                 seq, info = self.seq_and_info.pop(0)
+
+                # 去掉填充的字符
+                info = info.rstrip(b'\x00')
+
                 print("seq=%d exp=%d last=%d" % (seq, self.seq_expected, self.lastseq))
 
                 if seq == self.seq_expected:
