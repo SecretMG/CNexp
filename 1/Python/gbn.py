@@ -16,11 +16,15 @@
 from threading import Thread, Timer, Event
 from args import args
 from pdu import PDU, unpack_pdu, crc_check
+import os
 import socket
 from loss_error import loss_with_rate, error_with_rate
+from utils import get_timestamp
 
 error_rate = 0
 loss_rate = 0
+dir_out = 'outputs'
+
 
 def send_pdu(pdu, my_binding, target_sock):
     print("%s send pdu to %s:seq=%d, ack=%d info=%s\n" % (str(my_binding.getsockname()), str(target_sock), pdu.seq, pdu.ack, pdu.info[0:10]), end='')
@@ -189,6 +193,8 @@ class RecvingWindow:
     """接收窗口"""
     def __init__(self, my_binding, sendto_sock):
         # 事件定义
+        self.path = None
+        self.file_out = None    # 每一个实例只能存一个文件，接收完就关闭。再发送需要再新建一个实例
         self.my_binding = my_binding
         self.target = sendto_sock
         self.__running = Event()
@@ -225,9 +231,21 @@ class RecvingWindow:
             if len(self.seq_and_info) != 0:
                 seq, info = self.seq_and_info.pop(0)
                 print("seq=%d exp=%d last=%d" % (seq, self.seq_expected, self.lastseq))
+
                 if seq == self.seq_expected:
                     self.recv_info.append(info)
-                    pass                # info写入文件接口
+
+                    # 新开一个文件指针
+                    if self.path is None:
+                        # 如果是第一次收到这个端口发送的文件，则收到的是文件名
+                        self.path = f'{dir_out}/books/{get_timestamp()}_{self.target[1]}'
+                        os.makedirs(self.path, exist_ok=True)
+                        self.file_out = info.decode().split('/')[-1].split('.')[0]
+                    else:
+                        file = f'{self.path}/{self.file_out}.txt'
+                        with open(file, 'ab') as f:
+                            f.write(info)
+
                     print("%s received seq=%d, num of received packet:%d\n" %
                           (self.my_binding.getsockname(), seq, len(self.recv_info)), end='')
                     self.lastseq = seq
@@ -241,30 +259,31 @@ class RecvingWindow:
         self.seq_and_info.append((seq, info))
 
 
-def recv_thread(my_binding, sw=None, rw=None):
-    # 接收PDU并分发（Ack回执包或接受的数据包），对sw和rw进行操作
-    # 待完善：结束处理
-    while True:
-        # 每次传输一个PDU
-        binpack, sender_ip = my_binding.recvfrom(PDU.size)  # 仅接收PDU帧的大小
 
-
-        if loss_with_rate(loss_rate):
-            # 以0.2的几率丢失一个数据包
-
-            seq, ack, info = unpack_pdu(binpack)  # 解码数据包
-            print("Loss: seq=%d ack=%d\n"%(seq, ack), end='')
-            continue
-
-        if not crc_check(binpack):
-            # 检测到传输出错
-            print("check crc error\n", end='')
-        else:
-            # 接收到了一个正确的数据包
-            seq, ack, info = unpack_pdu(binpack)    # 解码数据包
-            if seq == -1 and sw is not None:
-                # 如果是ack包并且发送端开启
-                sw.get_ack(ack)
-            elif ack == -1 and rw is not None:
-                # 如果是数据包并且接受端开启
-                rw.get_seq_and_info(seq, info)
+# def recv_thread(my_binding, sw=None, rw=None):
+#     # 接收PDU并分发（Ack回执包或接受的数据包），对sw和rw进行操作
+#     # 待完善：结束处理
+#     while True:
+#         # 每次传输一个PDU
+#         binpack, sender_ip = my_binding.recvfrom(PDU.size)  # 仅接收PDU帧的大小
+#
+#
+#         if loss_with_rate(loss_rate):
+#             # 以0.2的几率丢失一个数据包
+#
+#             seq, ack, info = unpack_pdu(binpack)  # 解码数据包
+#             print("Loss: seq=%d ack=%d\n"%(seq, ack), end='')
+#             continue
+#
+#         if not crc_check(binpack):
+#             # 检测到传输出错
+#             print("check crc error\n", end='')
+#         else:
+#             # 接收到了一个正确的数据包
+#             seq, ack, info = unpack_pdu(binpack)    # 解码数据包
+#             if seq == -1 and sw is not None:
+#                 # 如果是ack包并且发送端开启
+#                 sw.get_ack(ack)
+#             elif ack == -1 and rw is not None:
+#                 # 如果是数据包并且接受端开启
+#                 rw.get_seq_and_info(seq, info)

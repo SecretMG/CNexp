@@ -5,14 +5,13 @@ import socket
 import threading
 import time
 import os
-from gbn import SendingWindow, RecvingWindow, recv_thread
+from gbn import SendingWindow, RecvingWindow
 
 from args import args
 from utils import *
 from gbn import *
 
 file_in = 'resource/Harry Potter.txt'
-dir_out = 'outputs'
 
 ip = '127.0.0.1'  # 服务器ip和端口
 port1, port2, port3, port4 = args.port1, args.port2, args.port3, args.port4
@@ -27,9 +26,9 @@ def get_sw(my_binding, sock_to, file):
         while True:
             # time.sleep(1e-2)    # significant
             data = f.read(data_size)
-            content.append(data)
             if data == b'':
                 break
+            content.append(data)
     print("共发送%d个包" % len(content))
     sw = SendingWindow(my_binding, sock_to, content)
     return sw
@@ -39,7 +38,7 @@ def receiver(name, my_binding, sws):
     '注意需要知道本端口所有的sender_windows'
     for port in sws:
         sws[port].start()  # 开启传输窗口
-    all_ports = []  # 记录是否是一个新端口向我方传输文件
+    all_ports = []  # 记录是否是一个新端口向我方传输数据（包括info和ack）
     rws = {}  # 本端口为每个信道对岸都建立一个rw
     cnt = 0
     while True:
@@ -66,27 +65,13 @@ def receiver(name, my_binding, sws):
         # 无意义包
         if seq == -1 and ack == -1:
             continue
-        # ack包
         if seq == -1:
-            print('\nack\n')    # noshow
+            'ack包'
             sws[port].get_ack(ack)
-        # info包
-        if ack == -1:
-            print('\ninfo\n')   # noshow
+        elif ack == -1:
+            'info包'
             rws[port].get_seq_and_info(seq, info)
 
-        # 拼接字符串
-        # str = b''.join(rws[port].recv_info)
-        # print(str)
-
-        # context = data[0]
-        # _, new_port = data[1]
-        # if new_port not in all_ports:
-        #     # 新开一个文件指针
-        #     os.makedirs(f'{dir_out}/books/{name}', exist_ok=True)
-        #     all_ports[new_port] = f'{dir_out}/books/{name}/{get_timestamp()}_{str(new_port)}.txt'
-        # with open(all_ports[new_port], 'ab') as f:
-        #     f.write(context)
 
 def main():
 
