@@ -19,8 +19,8 @@ from pdu import PDU, unpack_pdu, crc_check
 import socket
 from loss_error import loss_with_rate, error_with_rate
 
-error_rate = 0.1
-loss_rate = 0.1
+error_rate = 0
+loss_rate = 0
 
 def send_pdu(pdu, my_binding, target_sock):
     print("%s send pdu to %s:seq=%d, ack=%d info=%s\n" % (str(my_binding.getsockname()), str(target_sock), pdu.seq, pdu.ack, pdu.info[0:10]), end='')
@@ -160,7 +160,8 @@ class SendingWindow:
                     slide_times = self.sw_nolist.index(self.sw_recvlist[0], 0, self.last_sent+1) + 1
                     for i in range(slide_times):
                         self.success_sent += 1
-                        print("slide%d success%d\n" % (self.sw_nolist[0], self.success_sent), end='')
+                        print("%s slide seq=%d , num of succeeded packet:%d\n" %
+                              (str(self.mybinding.getsockname()), self.sw_nolist[0], self.success_sent), end='')
                         # timer向右滑动一位
                         if self.sw_timeouter[0] is not None:
                             self.sw_timeouter[0].cancel()
@@ -219,16 +220,20 @@ class RecvingWindow:
         while self.__running.is_set():
             self.__event_mainthread.wait()  # 此时主信号=True
 
+            p = PDU(info=b'ACK PACKET')
+
             if len(self.seq_and_info) != 0:
                 seq, info = self.seq_and_info.pop(0)
+                print("seq=%d exp=%d last=%d" % (seq, self.seq_expected, self.lastseq))
                 if seq == self.seq_expected:
                     self.recv_info.append(info)
                     pass                # info写入文件接口
-                    print("Received %d listlen %d\n" % (seq, len(self.recv_info)), end='')
+                    print("%s received seq=%d, num of received packet:%d\n" %
+                          (self.my_binding.getsockname(), seq, len(self.recv_info)), end='')
                     self.lastseq = seq
                     self.seq_expected = (seq + 1) % args.max_sending_no
                     # 发送反馈
-                p = PDU(ack=self.lastseq, info=b'ACK PACKET')
+                p.update(ack=self.lastseq)
                 send_pdu(p, self.my_binding, self.target)
 
 
