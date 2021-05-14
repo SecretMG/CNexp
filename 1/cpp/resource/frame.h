@@ -2,7 +2,17 @@
 #define FRAME_H
 
 #define Length 4096
+#define N 9
+#define QUEUE_SIZE 10
+#define SENDQUE 0 //这里是type 
+#define GETQUE 1
+#define EMPTY 1
+#define NOTEMPTY 0
+#define FULL 1
+#define NOTFULL 0
 
+#define ER -1
+#define SUCCESS 1 
 static unsigned short crc16_ccitt_table[] =
 {
     0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50A5, 0x60C6, 0x70E7,
@@ -48,15 +58,114 @@ short getcrcc(char *buff,int length){
     return crc;
 
 }
-struct frame
+/*数据帧结构体定义*/
+typedef struct frame
 {
     char type; //说明是哪种数据结构的帧
-    int ack; //确认帧的序号
-    int seq;//发送帧的序号
+    union 
+    {
+        int ack; //确认帧的序号
+        int seq;//发送帧的序号
+    }signal;  //用union更合适
+    
+    
     char data[Length];//数据字段，实验要求不超过4kB，此处设为4KB
     int length;//数据字段的长度
     short checksum;  //2个字节的crcc校验码
-};
+}Frame;
+
+//TODO:队列设计 
+int getMutex = 0;//互斥访问get，=1代表不能访问 
+Frame getq[QUEUE_SIZE];//存放获得的帧
+int getqStart = 0;//目前队列开始 
+int getqEnd = -1;
+int getNum = 0;
+
+int sendMutex = 0;//发送帧 
+Frame sendq[QUEUE_SIZE];
+int sendqStart = 0;//目前队列开始 
+int sendqEnd = 0;
+int sendNum = 0;
+
+Frame error;
+
+
+int empty(int type){
+	//get需要判空 
+	if(type == GETQUE && getNum == 0){
+		return EMPTY;
+	}else if(type == SENDQUE && sendNum == 0){
+		return EMPTY;
+	}
+	else{
+		return NOTEMPTY;
+	} 	
+} 
+
+int full(int type){
+	//send队列需要判满 
+	 /* */ 
+	 if(type == GETQUE && getNum == QUEUE_SIZE){
+	 	return FULL;
+	 }else if (type == SENDQUE && sendNum == QUEUE_SIZE){
+	 	return FULL;
+	 }else{
+	 	return NOTFULL;
+	 }
+}
+
+Frame getout(int type){
+	//获得一个帧,参数为GETQUE 
+	if(type == GETQUE){
+		if(!empty(GETQUE)){
+			getqEnd=(getqEnd+1)%QUEUE_SIZE;
+			getNum--;
+			return getq[getqEnd]; 
+		}else{
+			return error;
+		}
+	}else if(type == SENDQUE){
+		if(!empty(SENDQUE)){
+			sendqEnd=(sendqEnd+1)%QUEUE_SIZE;
+			sendNum--;
+			return sendq[sendqEnd]; 
+		}else{
+			return error;
+		}
+	}else{
+		return error;
+	}
+	
+	
+}
+
+int getin(int type,Frame in){
+	//只有send队列需要 
+	if(type == GETQUE){
+		if(!full(GETQUE)){
+			getq[getqStart] = in;
+			getqStart = (getqStart+1)%QUEUE_SIZE;
+			getNum++;
+			return SUCCESS;
+		}else{
+			return ER;
+		}
+	}else if(type == SENDQUE){
+		if(!full(SENDQUE)){
+			sendq[sendqStart] = in;
+			sendqStart = (sendqStart+1)%QUEUE_SIZE;
+			sendNum++;
+			return SUCCESS;
+		}else{
+			return ER;
+		}
+	}else{
+		return ER;
+	}
+	
+} 
+
+
 
 
 #endif
