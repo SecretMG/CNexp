@@ -261,33 +261,3 @@ class RecvingWindow:
 
     def get_seq_and_info(self, seq, info):
         self.seq_and_info.append((seq, info))
-
-
-
-# def recv_thread(my_binding, sw=None, rw=None):
-#     # 接收PDU并分发（Ack回执包或接受的数据包），对sw和rw进行操作
-#     # 待完善：结束处理
-#     while True:
-#         # 每次传输一个PDU
-#         binpack, sender_ip = my_binding.recvfrom(PDU.size)  # 仅接收PDU帧的大小
-#
-#
-#         if loss_with_rate(loss_rate):
-#             # 以0.2的几率丢失一个数据包
-#
-#             seq, ack, info = unpack_pdu(binpack)  # 解码数据包
-#             print("Loss: seq=%d ack=%d\n"%(seq, ack), end='')
-#             continue
-#
-#         if not crc_check(binpack):
-#             # 检测到传输出错
-#             print("check crc error\n", end='')
-#         else:
-#             # 接收到了一个正确的数据包
-#             seq, ack, info = unpack_pdu(binpack)    # 解码数据包
-#             if seq == -1 and sw is not None:
-#                 # 如果是ack包并且发送端开启
-#                 sw.get_ack(ack)
-#             elif ack == -1 and rw is not None:
-#                 # 如果是数据包并且接受端开启
-#                 rw.get_seq_and_info(seq, info)
