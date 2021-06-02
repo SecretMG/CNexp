@@ -100,14 +100,14 @@ class PDU:
 
     size = 2+2+args.data_size+2
 
-    def __init__(self, seq=-1, ack=-1, info=''):
+    def __init__(self, seq=-1, ack=-1, info=b''):
         self.seq = seq
         self.ack = ack
         self.info = info
         self.check_num = self.__get_check_sum()
         self.bin_pack = struct.pack('>hh%dsH' % args.data_size, seq, ack, info, self.check_num)
 
-    def update(self, seq=-1, ack=-1, info=''):
+    def update(self, seq=-1, ack=-1, info=b''):
         if seq == -1:
             seq = self.seq
         if ack == -1:

@@ -15,12 +15,41 @@ class Logs:
     def __init__(self):
         self.log_list = []
 
-    def catch(self, subject, event):
-        event_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
-        print('[%s]\t%s\t%s' % (event_time, subject, event))
-        self.log_list.append((event_time, subject, event))
+    def send_catch(self, subject, sendto, seq, ack, status):
+        log = {
+            'time': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f'),
+            'type': 'SEND',
+            'subject': subject,
+            'sendto': sendto,
+            'seq': seq,
+            'ack': ack,
+            'status': status
+        }
+        print(log)
+        self.log_list.append(log)
 
+    def recv_catch(self, subject, recvfrom, seq, ack, status):
+        log = {
+            'time': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f'),
+            'type': 'RECV',
+            'subject': subject,
+            'recvfrom': recvfrom,
+            'seq': seq,
+            'ack': ack,
+            'status': status
+        }
+        print(log)
+        self.log_list.append(log)
 
-a = Logs()
-
-a.catch('mike', 'send pdu')
+    def err_catch(self, err_type, subject, recvfrom, seq, ack, status):
+        log = {
+            'time': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f'),
+            'type': err_type,
+            'subject': subject,
+            'recvfrom': recvfrom,
+            'seq': seq,
+            'ack': ack,
+            'status': status
+        }
+        print(log)
+        self.log_list.append(log)
