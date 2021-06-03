@@ -6,11 +6,12 @@
 #include <string>
 #include <stdlib.h>
 #include "frame.h" 
+#include "settings.h"
+#include "GBN.h"
 #pragma comment(lib,"WS2_32.lib")
 
 #define FRAMESIZE 3000 //自己定义,缓冲区大小（每次缓冲区内存放一个帧） 
 #define DATASIZE 1200  //自己定义发送的数据大小 
-#define SENDPORT 8884
 #define RECEIVEPORT 1348
  
 WSADATA wsa;
@@ -19,7 +20,19 @@ int endFrameS = 0;//传送时设计一个结束帧，收到结束帧后就停止接收
 int endFrameR = 0; 
 char recvData[FRAMESIZE];//接收区 
 char sendData[FRAMESIZE];//发送区 
+struct frame getbuf;
+int recvnum = 0;//第几次接收 
+int sendnum = 0;//第几次接收 
+
 Frame test;
+struct frame sendbuf;
+
+void Init(const char *a){
+	readConfig(a);
+	nextseq = InitSeqNo;//第一个发送的序号
+	window = (Frame *)malloc(sizeof(Frame)*SWSize);
+	
+}
 
 int Read_file(FILE *fp,char *start){
 	int i = 0;
@@ -35,12 +48,6 @@ int Read_file(FILE *fp,char *start){
 	return i;
 }
 
-//===========================================================================================
-//TODO:将读入信息(origin)封装成帧，放入buf中 ，len表示origin的长度,n表示帧序号 （zhao） 
-//返回值为帧的长度，如果输入空数据，返回-1 
-//TODO:发送的帧 
-
-struct frame sendbuf;
 int toSend(char *origin,int len,int n,char type){
 	if (len == 0 || strlen(origin) == 0){
 		return -1;
@@ -57,14 +64,10 @@ int toSend(char *origin,int len,int n,char type){
 	return sizeof(sendbuf);
 	
 }
-struct frame getbuf;
-struct frame end;
 
-//接受到的东西放getData里，getbuf为收到的结构体，n为序号(zhao)
 int toData(char *getData,frame getbuf,int n){
 	int flag = 0;
-	if (getbuf.type == 'A') //Ack
-	{
+	if (getbuf.type == 'A'){ //Ack
 		flag = 1; //接受到的为ACK
 		n = getbuf.signal.ack;
 	}
@@ -79,24 +82,11 @@ int toData(char *getData,frame getbuf,int n){
 		
 	}
 	else{
+		printf("bad!\n");
 		flag =-1; //传输过程遭到破坏
 	}
 	return flag;
 }
-//==============================================================
-
-void clearF(Frame i){
-	memset(i.data,0,sizeof(i.data));
-	i.length = 0;
-	i.type=0;
-	return;
-}
-
-void endFrameBuild(){
-	end.type='e';
-	return;
-}
-
 
 DWORD WINAPI recv(LPVOID p){
 	//printf("in recv thread.\n");
@@ -120,36 +110,25 @@ DWORD WINAPI recv(LPVOID p){
 		return -1;
 	}
 	len = sizeof(addr_in);
-	//printf("socket success.\n");
-	//建立连接 
-	//Sleep(3000);
 	
 	while(findB == 0){
-		//printf("waitforB.\n");
 		memset(recvData, 0, sizeof(recvData));
-		//recvData[ret] = 0x00;
-		//TODO:发送建立连接的帧(zhao) 
 		ret = recvfrom(sclient, recvData, FRAMESIZE, 0, (sockaddr *)&addr_in, &len);
 		memcpy(&getbuf,recvData,sizeof(Frame));
 		if(getbuf.type == '1'){
 			findB = 1;
 		}
-		//Sleep(4);
 	} 
-	//printf("findB!\n");
+	
 	while (!endFrameR){
 		Sleep(1000);
     	do{ 
 			memset(recvData, 0, sizeof(recvData));
-			//把接收到的信息转换成结构体,往数组里丢就可以,处理的事情线程管 (zhao)
 			ret = recvfrom(sclient, recvData, FRAMESIZE, 0, (sockaddr *)&addr_in, &len);
-			//printf("ret=%d,len=%d\n",ret,strlen(recvData));
-			//TODO:这里不知道为什么有问题 
 			clearF(getbuf);
 			memcpy(&getbuf,recvData,sizeof(recvData));
-			//printf("getbuf.data=%s\n",getbuf.data);
-			if(!full(GETQUE)){
-				getin(GETQUE,getbuf);
+			if(!full(GETQUE,0)){
+				getin(GETQUE,getbuf,0);
 			} 
     	}while(endFrameR == 0);
     	
@@ -173,7 +152,7 @@ DWORD WINAPI send(LPVOID p){
 	
 	sclient = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	addr_in.sin_family = AF_INET;
-	addr_in.sin_port = htons(SENDPORT);
+	addr_in.sin_port = htons(UDPPort);
 	addr_in.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
 	
 	//建立连接的帧	
@@ -201,12 +180,11 @@ DWORD WINAPI send(LPVOID p){
 	    
         for(i = 0;fp!=NULL;i++){
         	memset(sendData,0,sizeof(sendData));
-        	num = Read_file(fp,data);//data中存放了帧的具体数据内容
-        	/*memcpy(sendData,&sendbuf,sizeof(sendbuf));
-        	clearF(test);
-        	memcpy(&test,sendData,sizeof(sendbuf));*/
+        	if(winFull == 0){
+        		num = Read_file(fp,data);//data中存放了帧的具体数据内容
+			} 
         	if(num<=0){
-        		//TODO:发送end帧 (gui)
+        		//发送end帧
         		endFrameS = 1;
         		memset(sendData,0,sizeof(sendData));
         		clearF(sendbuf);
@@ -218,36 +196,78 @@ DWORD WINAPI send(LPVOID p){
         		memcpy(sendData,&sendbuf,sizeof(sendbuf));
         		printf("End入队，共有%d\n",sendNum);
 			}else{
-				num = toSend(data,num,0,'S');
+				if(winFull == 0){ 
+					num = toSend(data,num,nextseq,'S');
+					//ErrorRate处理 
+					if(isError() == 1){
+						 char e;
+						 int pos;
+						 srand(time(NULL));
+						 e = rand()%26 + 'a';
+						 pos = rand()%300;
+						 if(pos<sizeof(data)){
+						 	sendbuf.data[pos] = e;
+						 }
+					}
+				}
+				
 			}
 			
-			if(!full(SENDQUE)){
-				memcpy(sendData,&sendbuf,sizeof(sendbuf));
-				getin(SENDQUE,sendbuf);
-			}else{
-				printf("发送队列满!\n");
+			//获得ACK，窗口要滑动，序号循环之后再处理 
+			if(getACK == 1){
+				if(nextseq < base + SWSize){ 
+        			nextseq++;
+        			winFull = 0;
+    			}
+    			else{
+    				winFull = 1;
+				}
+    			getACK = 0;
 			}
+    		
+			if(sendBadReport == 0 && !full(SENDQUE,0)){
+				memcpy(sendData,&sendbuf,sizeof(sendbuf));
+				getin(SENDQUE,sendbuf,0);
+			}else if (sendBadReport == 0 && full(SENDQUE,0)){
+				printf("发送队列空!\n");
+			}else{
+				//TODO:发送报告错误的帧结构 
+			}
+			
 			clearF(sendbuf);
-			if(!empty(SENDQUE)){
-				sendbuf = getout(SENDQUE);
+			if(!empty(SENDQUE,1)){
+				sendbuf = getout(SENDQUE,1);//优先发送ack 
+				retval = sendto(sclient, sendData, sizeof(sendData), 0, (sockaddr *)&addr_in, sizeof(addr_in));
+		        	if (retval == SOCKET_ERROR){
+						printf("sendt0 failed\n");
+						closesocket(sclient);
+						WSACleanup();
+						return -1;
+					}
+			}else if(!empty(SENDQUE,0)){
+				//TODO:如果窗口满了，但没收到ack，则不应该继续发送 
+				if(isLost() == 0 && winFull == 0){
+					sendbuf = getout(SENDQUE,0);
+					//怎么定时是个问题 
+					retval = sendto(sclient, sendData, sizeof(sendData), 0, (sockaddr *)&addr_in, sizeof(addr_in));
+		        	if (retval == SOCKET_ERROR){
+						printf("sendt0 failed\n");
+						closesocket(sclient);
+						WSACleanup();
+						return -1;
+					}
+				}
 			}else{
 				printf("send队列空！\n");
 			}
-			printf("send start : '%c'\n",sendbuf.data[0]);
-			retval = sendto(sclient, sendData, sizeof(sendData), 0, (sockaddr *)&addr_in, sizeof(addr_in));
-        	if (retval == SOCKET_ERROR){
-				printf("sendt0 failed\n");
-				closesocket(sclient);
-				WSACleanup();
-				return -1;
-			}
+			
 			Sleep(1000);
 			if(endFrameS == 1){
 				break;
 			}
 		}
 		fclose(fp);
-		printf("num=%d\n",num); 
+		//printf("num=%d\n",num); 
         if(num<=0){
     		printf("传输完成！\n");
     		break;
@@ -261,31 +281,52 @@ DWORD WINAPI send(LPVOID p){
 DWORD WINAPI deal(LPVOID p){
 	//如果接收队列不为空，则把它拆出来（这里判断包序号，写GBN算法）（zhang）
 	char rdata[DATASIZE];
-	FILE *fp; 
+	FILE *fp;
+	FILE *fpout; 
 	Frame getBuf;
 	fp = fopen("recvFromB.txt","w");
+	fp = fopen("recvFromB_.txt","w");
 	if(fp == NULL){
 		printf("Create Error!\n");
 		return -1;
 	}
 	while(!endFrameR){
-		while(empty(GETQUE)) ;
-		getBuf = getout(GETQUE);
+		while(empty(GETQUE,0)) ;
+		getBuf = getout(GETQUE,0);
 		
 		//printf("getbuf.type=%c\n",getbuf.type);
 		if(getBuf.type =='S'){ //是数据包 
 			int n; //Attention：这里的n用来储存序号，不知道Go-Back-N算法用什么存，然后检查序号
-			printf("data:%d,type=%c\n",strlen(getbuf.data),getbuf.type);
+			printf("data:%d,type=%c,num=%d\n",strlen(getbuf.data),getbuf.type,getbuf.length);
 			if (toData(rdata,getbuf,n) != -1){ //todata没办法正常判断 
 				printf("S:成功拆分出数据\n");
+				if(getbuf.signal.seq!=n){
+					printf("%d,pdu_exp=%d,pdu_recv=%d,status=OK\n",recvnum,n,getbuf.signal.seq);
+					fprintf(fp,"%s",getbuf.data);
+				}else{
+					printf("%d,pdu_exp=%d,pdu_recv=%d,status=NoErr\n",recvnum,n,getbuf.signal.seq);
+				}
+				
 			}
 			else{
-				//printf("Seq:数据传输过程出现错误\n");
-			}
-			
-			fprintf(fp,"%s",getbuf.data);
+				printf("Seq:数据传输过程出现错误\n");
+				printf("%d,pdu_exp=%d,pdu_recv=%d,status=DataErr\n",recvnum,n);
+				//TODO:需要超时重传还是主动重传？ 
+			} 
 		}else if(getBuf.type = 'A'){
-			//如果接收到ACK了，该做什么处理，GBN解决（zhang） 
+			//TODO:如果接收到ACK了，该做什么处理，GBN解决（zhang） 
+			//接收到ACK之后，需要增加序号，滑动窗口，窗口需要暂存一些Frame 
+			if(getBuf.signal.ack >= base){
+			//ack的序号大于等于待确认帧的序号 
+			waitcount = 0;
+			if(nextseq = totalseq+1){
+				flag = 1;//全部帧传输完成 
+				printf("数据传输全部完成！！！\n");
+			}
+			else{
+				base = getBuf.signal.ack + 1;//下一个待确认帧的序号为ack的序号加一 
+			} 
+		}
 		}else if (getBuf.type = 'E'){
 			printf("getEnd!\n");
 			endFrameR = 1;
@@ -293,7 +334,8 @@ DWORD WINAPI deal(LPVOID p){
 			//接收到结束帧 ,结束 
 		}else if(getBuf.type == 'B'){
 			//接收到错误报告了，应该重新发送，需要清空自己的sendQue,并且放入某个该发的内容 
-			//用它void clearQue(int type)
+			clearQ(SENDQUE);
+			sendBadReport = 1;//从窗口的头开始发送（即队列开头）  
 		} 
 			
 	} 
@@ -302,6 +344,7 @@ DWORD WINAPI deal(LPVOID p){
 
 int main()
 {
+	Init("AConfig.txt");
 	error.type='B';
 	HANDLE recvh, sendh,dealh;
 	int a = 0;

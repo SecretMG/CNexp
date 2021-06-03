@@ -13,6 +13,8 @@
 
 #define ER -1
 #define SUCCESS 1 
+
+#include <string.h>
 static unsigned short crc16_ccitt_table[] =
 {
     0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50A5, 0x60C6, 0x70E7,
@@ -77,24 +79,34 @@ typedef struct frame
 //TODO:队列设计 
 int getMutex = 0;//互斥访问get，=1代表不能访问 
 Frame getq[QUEUE_SIZE];//存放获得的帧
+
 int getqStart = 0;//目前队列开始 
 int getqEnd = -1;
 int getNum = 0;
 
 int sendMutex = 0;//发送帧 
+
 Frame sendq[QUEUE_SIZE];
+int sendaStart = 0;//目前队列开始 
+int sendaEnd = -1;
+int sendaNum = 0;
+
+Frame senda[QUEUE_SIZE];//new:ack单独放一个队伍中 
 int sendqStart = 0;//目前队列开始 
-int sendqEnd = 0;
+int sendqEnd = -1;
 int sendNum = 0;
 
 Frame error;
+struct frame end;
 
 
-int empty(int type){
+int empty(int type,int who){
 	//get需要判空 
 	if(type == GETQUE && getNum == 0){
 		return EMPTY;
-	}else if(type == SENDQUE && sendNum == 0){
+	}else if(type == SENDQUE && sendNum == 0 && who == 0){
+		return EMPTY;
+	}else if(type == SENDQUE && sendaNum == 0 && who == 1){
 		return EMPTY;
 	}
 	else{
@@ -102,22 +114,24 @@ int empty(int type){
 	} 	
 } 
 
-int full(int type){
+int full(int type,int who){
 	//send队列需要判满 
 	 /* */ 
 	 if(type == GETQUE && getNum == QUEUE_SIZE){
 	 	return FULL;
-	 }else if (type == SENDQUE && sendNum == QUEUE_SIZE){
+	 }else if (who == 0 &&type == SENDQUE && sendNum == QUEUE_SIZE ){
+	 	return FULL;
+	 }else if (who == 1 &&type == SENDQUE && sendNum == QUEUE_SIZE){
 	 	return FULL;
 	 }else{
 	 	return NOTFULL;
 	 }
 }
 
-Frame getout(int type){
+Frame getout(int type,int who){
 	//获得一个帧,参数为GETQUE 
 	if(type == GETQUE){
-		if(!empty(GETQUE)){
+		if(!empty(GETQUE,0)){
 			getqEnd=(getqEnd+1)%QUEUE_SIZE;
 			getNum--;
 			return getq[getqEnd]; 
@@ -125,13 +139,24 @@ Frame getout(int type){
 			return error;
 		}
 	}else if(type == SENDQUE){
-		if(!empty(SENDQUE)){
-			sendqEnd=(sendqEnd+1)%QUEUE_SIZE;
-			sendNum--;
-			return sendq[sendqEnd]; 
+		if(who == 0){
+			if(!empty(SENDQUE,who)){
+				sendqEnd=(sendqEnd+1)%QUEUE_SIZE;
+				sendNum--;
+				return sendq[sendqEnd]; 
+			}else{
+				return error;
+			}
 		}else{
-			return error;
+			if(!empty(SENDQUE,who)){
+				sendaEnd=(sendaEnd+1)%QUEUE_SIZE;
+				sendaNum--;
+				return senda[sendaEnd]; 
+			}else{
+				return error;
+			}
 		}
+		
 	}else{
 		return error;
 	}
@@ -139,10 +164,10 @@ Frame getout(int type){
 	
 }
 
-int getin(int type,Frame in){
+int getin(int type,Frame in,int who){
 	//只有send队列需要 
 	if(type == GETQUE){
-		if(!full(GETQUE)){
+		if(!full(GETQUE,0)){
 			getq[getqStart] = in;
 			getqStart = (getqStart+1)%QUEUE_SIZE;
 			getNum++;
@@ -151,21 +176,54 @@ int getin(int type,Frame in){
 			return ER;
 		}
 	}else if(type == SENDQUE){
-		if(!full(SENDQUE)){
-			sendq[sendqStart] = in;
-			sendqStart = (sendqStart+1)%QUEUE_SIZE;
-			sendNum++;
-			return SUCCESS;
+		if(who == 0){
+			if(!full(SENDQUE,who)){
+				sendq[sendqStart] = in;
+				sendqStart = (sendqStart+1)%QUEUE_SIZE;
+				sendNum++;
+				return SUCCESS;
+			}else{
+				return ER;
+			}
 		}else{
-			return ER;
+			if(!full(SENDQUE,who)){
+				senda[sendaStart] = in;
+				sendaStart = (sendaStart+1)%QUEUE_SIZE;
+				sendaNum++;
+				return SUCCESS;
+			}else{
+				return ER;
+			}
 		}
+		
 	}else{
 		return ER;
 	}
 	
 } 
 
+void clearF(Frame i){
+	memset(i.data,0,sizeof(i.data));
+	i.length = 0;
+	i.type=0;
+	return;
+}
 
+void clearQ(int type){
+	if(type == SENDQUE){
+		sendNum = 0;
+		sendqStart = -1;
+		sendqEnd = 0;
+	}else{
+		getqStart = 0;//目前队列开始 
+	    getqEnd = -1;
+		getNum = 0;
+	}
+	return;
+}
 
-
+void endFrameBuild(){
+	end.type='e';
+	return;
+}
 #endif

@@ -6,6 +6,8 @@
 #include <string>
 #include <stdlib.h>
 #include "frame.h" 
+#include "settings.h"
+#include "GBN.h"
 #pragma comment(lib,"WS2_32.lib")
 
 #define FRAMESIZE 3000 //自己定义,缓冲区大小（每次缓冲区内存放一个帧） 
@@ -18,7 +20,6 @@
 
 
 /***********/ 
- 
 WSADATA wsa;
 int findA = 0;
 int endFrameR = 0;//传送时设计一个结束帧，收到结束帧后就停止接收 
@@ -26,7 +27,6 @@ int endFrameS = 0;
 char recvData[FRAMESIZE];//接收区 
 char sendData[FRAMESIZE];//发送区 
 struct frame getbuf;
-struct frame end;
 struct frame sendbuf;
 
 /********* GBN部分的全局变量   *******/
@@ -63,13 +63,6 @@ int toSend(char *origin,int len,int n,char type){
 	
 }
 
-void clearF(Frame i){
-	memset(i.data,0,sizeof(i.data));
-	i.length = 0;
-	i.type=0;
-	return;
-}
-
 int toData(char *getData,frame getbuf,int n){
 	int flag = 0;
 	if (getbuf.type == 'A'){ //Ack
@@ -80,6 +73,7 @@ int toData(char *getData,frame getbuf,int n){
 		n = getbuf.signal.seq;
 	}
 	//获取的数据有问题（zhao），并不能拆分出字符串 
+	printf("length=%d\n",getbuf.length);
 	if (getcrcc(getbuf.data,getbuf.length) == getbuf.checksum){
 		for(int i=0;i<getbuf.length;i++){
 			getData[i] = getbuf.data[i];
@@ -91,38 +85,13 @@ int toData(char *getData,frame getbuf,int n){
 			getData[i] = getbuf.data[i];
 		}
 		//strcpy(getData,getbuf.data);
+		printf("---bad---\n");
 		flag =-1; //传输过程遭到破坏
 	}
-	//printf("")
+	//
 	return flag;
 }
 //==============================================================
-
-void endFrameBuild(){
-	end.type='e';
-	return;
-}
-
-void clearQue(int type){
-	if(type == GETQUE){
-		/*
-		Frame getq[QUEUE_SIZE];//存放获得的帧
-		int getqStart = 0;//目前队列开始 
-		int getqEnd = -1;
-		int getNum = 0;*/
-		memset(getq,0,sizeof(getq));
-		getqStart = 0;
-		getNum = 0;
-		getqEnd = -1;
-	}
-	else if(type == SENDQUE){
-		memset(sendq,0,sizeof(sendq));
-		sendqStart = 0;
-		sendNum = 0;
-		sendqEnd = -1;
-	}
-	return;
-} 
 
 DWORD WINAPI recv(LPVOID p){
 	//printf("in recv thread.\n");
@@ -148,12 +117,10 @@ DWORD WINAPI recv(LPVOID p){
 	}
 	len = sizeof(addr_in);
 	
-	
 	//建立连接 
 	printf("waitforA.\n");
 	ret = 0;
 	while(findA == 0){
-    	//一直等待A传来的消息 
 		memset(recvData, 0, sizeof(recvData));
 		ret = recvfrom(sclient, recvData, sizeof(recvData), 0, (sockaddr *)&addr_in, &len);
 		memcpy(&getbuf,recvData,sizeof(getbuf));
@@ -169,13 +136,14 @@ DWORD WINAPI recv(LPVOID p){
 			memset(recvData, 0, sizeof(recvData));
 			//把接收到的信息转换成结构体,往数组里丢就可以,处理的事情线程管 (zhao)
 			ret = recvfrom(sclient, recvData, FRAMESIZE, 0, (sockaddr *)&addr_in, &len);
-			//printf("ret=%d,len=%d\n",ret,strlen(recvData));
 			//TODO:这里不知道为什么有问题 
 			clearF(getbuf);
 			memcpy(&getbuf,recvData,sizeof(recvData));
-			//printf("getbuf.data=%s\n",getbuf.data);
-			if(!full(GETQUE)){
-				getin(GETQUE,getbuf);
+			//TODO:WRONG??
+			printf("getbuf.data=%s\n",getbuf.data);
+			printf("getbuf.length=%d\n",getbuf.length);
+			if(!full(GETQUE,0)){
+				getin(GETQUE,getbuf,0);
 			} 
     	}while(endFrameR == 0);
     	
@@ -207,7 +175,6 @@ DWORD WINAPI send(LPVOID p){
 	memcpy(sendData, &firstC, sizeof(firstC));
 			
 	while(findA == 0){
-		//如果没有接收到连接，则一直等待
 		Sleep(1000); 
     	retval = sendto(sclient, sendData, sizeof(sendData), 0, (sockaddr *)&addr_in, sizeof(addr_in));
 	} 
@@ -224,12 +191,8 @@ DWORD WINAPI send(LPVOID p){
 	    
         for(i = 0;fp!=NULL;i++){
         	memset(sendData,0,sizeof(sendData));
-        	num = Read_file(fp,data);//data中存放了帧的具体数据内容
-        	/*memcpy(sendData,&sendbuf,sizeof(sendbuf));
-        	clearF(test);
-        	memcpy(&test,sendData,sizeof(sendbuf));*/
+        	num = Read_file(fp,data);
         	if(num<=0){
-        		//TODO:发送end帧 (gui)
         		endFrameS = 1;
         		memset(sendData,0,sizeof(sendData));
         		clearF(sendbuf);
@@ -242,21 +205,31 @@ DWORD WINAPI send(LPVOID p){
         		printf("End入队，共有%d\n",sendNum);
 			}else{
 				num = toSend(data,num,0,'S');
+				//printf("sendbuf.length=%d\n",sendbuf.length);，发送无问题 
+			}
+			 
+			if(sendBadReport == 0 && !full(SENDQUE,0)){
+				memcpy(sendData,&sendbuf,sizeof(sendbuf));
+				getin(SENDQUE,sendbuf,0);
+			}else if (sendBadReport == 0 && full(SENDQUE,0)){
+				printf("发送队列空!\n");
+			}else{
+				//---GBN---- 
+				//TODO:发送报告错误的帧结构 （zhao&zhang）
+				/* getin(SENDQUE,sendbuf,1) 代表把缓冲区sendbuf放入sendaque中
+				 * 也就是发送ack的队列中
+				 */ 
+				sendBadReport = 0;
 			}
 			
-			if(!full(SENDQUE)){
-				memcpy(sendData,&sendbuf,sizeof(sendbuf));
-				getin(SENDQUE,sendbuf);
-			}else{
-				printf("发送队列空!\n");
-			}
-			if(!empty(SENDQUE)){
-				sendbuf = getout(SENDQUE);
+			if(!empty(SENDQUE,1)){
+				sendbuf = getout(SENDQUE,1);//优先发送ack 
+			}else if(!empty(SENDQUE,0)){
+				sendbuf = getout(SENDQUE,0);
 			}else{
 				printf("send队列空！\n");
 			}
-			sendbuf = getout(SENDQUE);
-			printf("send start : '%c'\n",sendbuf.data[0]);
+			
 			retval = sendto(sclient, sendData, sizeof(sendData), 0, (sockaddr *)&addr_in, sizeof(addr_in));
         	if (retval == SOCKET_ERROR){
 				printf("sendt0 failed\n");
@@ -291,30 +264,29 @@ DWORD WINAPI deal(LPVOID p){
 		return -1;
 	}
 	while(!endFrameR){
-		while(empty(GETQUE)) ;
-		getBuf = getout(GETQUE);
+		while(empty(GETQUE,0)) ;
+		getBuf = getout(GETQUE,0);
 		
-		//printf("getbuf.type=%c\n",getbuf.type);
 		if(getBuf.type =='S'){ //是数据包 
 			int n; //Attention：这里的n用来储存序号，不知道Go-Back-N算法用什么存，然后检查序号
-			printf("data:%d,type=%c\n",strlen(getbuf.data),getbuf.type);
-			if (toData(rdata,getbuf,n) != -1){ //todata没办法正常判断 
+			if (toData(rdata,getBuf,n) != -1){ //TODO:todata没办法正常判断 
 				printf("S:成功拆分出数据\n");
 			}
 			else{
-				//printf("Seq:数据传输过程出现错误\n");
+				printf("Seq:数据传输过程出现错误\n");
 			}
 			fprintf(fp,"%s",getbuf.data);
 		}else if(getBuf.type = 'A'){
 			//如果接收到ACK了，该做什么处理，GBN解决（zhang） 
+			
 		}else if (getBuf.type = 'E'){
 			printf("I am End.\n");
 			endFrameR = 1;
 			break;
 			//接收到结束帧 ,结束 
-		}else if(getBuf.type == 'B'){
-			//接收到错误报告了，应该重新发送，需要清空自己的sendQue,并且放入某个该发的内容 
-			//用它void clearQue(int type)
+		}else if(getbuf.type == 'B'){
+			clearQ(SENDQUE);
+			sendBadReport = 1; 
 		} 
 			
 	} 
@@ -334,20 +306,7 @@ int main()
 	sendh = CreateThread(NULL,0,send,0,0,&send_id);//创建发送线程
 	recvh = CreateThread(NULL,0,recv,0,0,&recv_id);
 	dealh = CreateThread(NULL,0,deal,0,0,&deal_id);
-	//TODO:再开一个进程处理帧（gui）  
-	//dealh = CreateThread(NULL, 0, deal, 0, 0, &deal_id);
-	/*
-	while (1)
-	{
-		Sleep(3000);
-		GetExitCodeThread(recvh, &recv_excode);//获取线程状态 
-		GetExitCodeThread(sendh, &send_excode);//获取线程状态 
-		//GetExitCodeThread(dealh, &deal_excode);
-		//printf("recv=%d,send=%d\n",recv_excode,send_excode);
-		if (recv_excode != STILL_ACTIVE && send_excode != STILL_ACTIVE){
-			break;
-		}
-	}*/
+	
 	HANDLE m_hEvent[3];    
   //两事件  
   	m_hEvent[0]=sendh;  
