@@ -3,32 +3,39 @@ package pk;
 import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.Objects;
+import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.Date;
+import java.text.SimpleDateFormat;
 
 import static java.lang.Thread.sleep;
 import static pk.Serializer.serializer;
 
-public class SendGBN{
+public class SendGBN implements Runnable{
     //constants
-    public static byte N = 5;              //the N from "Go-Back-N"
+    volatile Args config = new Args();
     public static byte MAX_SEQ_NUMBER = 100; //The maximum sequence number
-    public static int PORT = 7609;          //the receiver's port
-    public static int DELAY = 10;         //1 second delay for timeout
-    public static final int BYTES_PER_PACKET = 4096;
+    public int PORT;          //the receiver's port
 
     //the socket
     DatagramSocket socket;
     //the ip address of the receiver
     InetAddress ipAddress;
+    // file to read
+    String sendfile = "";
+    String logfile = "";
 
     //variables from the algorithm
     byte base = 0;
-    byte nextSeqNum = 0;
+    int ackno = -1;
+    int number = 0;
+    byte nextSeqNum = config.InitSeqNo;
 
     //needed for receiver thread
-    volatile boolean done = false;
+    boolean done = false;
     volatile boolean timeout = false;
 
     //number of packets sent, but unacknowledged
@@ -39,6 +46,10 @@ public class SendGBN{
 
     // buffer
     String [] windowbuffer = new String[MAX_SEQ_NUMBER];
+
+    static Random rng = new Random();
+
+    public BufferedWriter SdLog = null;
 
     public void ResetTimer(){
         timer.cancel();
@@ -53,7 +64,7 @@ public class SendGBN{
                     e.printStackTrace();
                 }
             }
-        },DELAY);
+        },config.Timeout);
     }
 
     //////////////////////////////
@@ -64,34 +75,35 @@ public class SendGBN{
     //main program
     //hostname can be included on the command line
     //if not, assume the receiver is listening on this machine
-    public static void main(String[] args) throws IOException{
+    public static void main(String args[]) throws IOException{
         InetAddress ipAddress = null;
-        if(args.length > 0){
-            //get specified host
-            ipAddress = InetAddress.getByName(args[0]);
-        }
-        else{
-            //use default local host
-            ipAddress = InetAddress.getByName("localhost"); //loopback
-        }
+//        if(args.length > 0){
+//            //get specified host
+//            ipAddress = InetAddress.getByName(args[0]);
+//        }
+//        else{
+//            //use default local host
+//            ipAddress = InetAddress.getByName("localhost"); //loopback
+//        }
+        ipAddress = InetAddress.getByName("localhost");
         //create a new sender
-        SendGBN sender = new SendGBN(ipAddress);
-
-        //start processing the user's data
-        sender.processUserData();
+        int port = 7609;
+        String path = "D:\\learn\\2021\\Network\\labs\\CNexp-master\\CNexp-master\\1\\java\\resource\\test.txt";
+//        SendGBN sender = new SendGBN(ipAddress, port, path);
+//
+//        //start processing the user's data
+//        sender.processUserData();
     }
 
     //constructor
-    public SendGBN(InetAddress ip) throws IOException{
+    public SendGBN(InetAddress ip, int port, String path, String logpath) throws IOException{
         ipAddress = ip;
-
+        PORT = port;
+        sendfile = path;
+        logfile = logpath;
         socket = new DatagramSocket();
 
-        //create receiver thread
-        ACKListener rcv = new ACKListener();
-
-        //start the thread
-        rcv.start();
+        System.out.println("sender at port:" + PORT + "created");
 
         /////////////////////////////
         //
@@ -101,12 +113,20 @@ public class SendGBN{
 
     //deals with getting the data from the user to send
     public void processUserData() throws IOException{
+
         //create input reading mechanism
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
 
         // System.out.println("Enter some text, to end place a . on a line alone.");
 
-        File file = new File("E:\\stan.txt");
+        File file = new File(sendfile);
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH mm ss");
+        String LogName = "E:\\SdLog\\" + df.format(new Date()) + ".txt";
+        try {
+            SdLog = new BufferedWriter(new FileWriter(logfile));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         BufferedReader br = new BufferedReader(new FileReader(file));
 
@@ -115,7 +135,7 @@ public class SendGBN{
         String line;
         while ((line = br.readLine()) != null){
             //wait until the queue is no longer full
-            while(unAckedPackets == N || timeout){
+            while(unAckedPackets == config.SWSize  || timeout){
                 //we can do this because we will be running other threads
                 //we'll give them a chance to run
                 Thread.yield();
@@ -123,7 +143,7 @@ public class SendGBN{
 
             System.out.println("read line:                              "+ line);
 
-            sendPacket(line,0);
+            sendPacket(line,"New");
 
             ///////////////////////////////////////////
             //
@@ -137,8 +157,7 @@ public class SendGBN{
         done = true;
         timer.cancel();
         socket.close();
-        System.out.println("Done!");
-        System.exit(0);
+        System.out.println("port:" + PORT + "Done!");
     }
 
     /*
@@ -152,7 +171,7 @@ public class SendGBN{
      * their methods
      */
 
-    public synchronized void sendPacket(String line,int from) throws IOException{
+    public synchronized void sendPacket(String line,String status) throws IOException{
         ///////////////////////////////////////////
         //
         // Turn the char c into a packet and send it off.
@@ -161,21 +180,45 @@ public class SendGBN{
         //
         // See the book
         //
-
         windowbuffer[nextSeqNum] = line;
 
 //        for (int ads = 0;ads<10;ads++)System.out.println(windowbuffer[ads]);
         System.out.println("send packet seq" + nextSeqNum);
         unAckedPackets++;
         System.out.println("unacked" + unAckedPackets);
-        System.out.println("");
 
         MyPacket udp_pkt = new MyPacket(nextSeqNum, (byte) -1,line);
         byte[] udp_pkt_bytes = serializer.toBytes(udp_pkt);
-        byte[] buf = CRC.__init__(udp_pkt_bytes);
+        byte[] buf = null;
+
+        double PDUError = rng.nextDouble();
+        System.out.println(PDUError);
+        System.out.println("");
+
+        if(PDUError <= config.ErrorRate){
+            buf = udp_pkt_bytes;
+        }
+        else{
+            buf = CRC.__init__(udp_pkt_bytes);
+        }
         DatagramPacket pkt = new DatagramPacket(buf, buf.length, ipAddress, PORT);
 
-        if (from == 0 && nextSeqNum == 77){
+        double PDULost = rng.nextDouble();
+        System.out.println(PDULost);
+        System.out.println("");
+
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SS");
+//        String LogData = "time:" + df.format(new Date()) + " type:send" + " subject:(" + ipAddress + "," + PORT + ")" + " sendto:(" + ipAddress + "," + PORT + ")" + " seq:" + nextSeqNum + " ack:321" + " status:" + status;
+        String LogData = ++number + ", pdu_to_send=" + nextSeqNum + ", status=" + status + ", ackedNo=" + ackno;
+        try {
+            SdLog.write(LogData);
+            SdLog.newLine();
+            SdLog.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        if (PDULost <= config.LostRate){
             nextSeqNum = (byte)((nextSeqNum + 1) % MAX_SEQ_NUMBER);
             return;
         }
@@ -183,16 +226,6 @@ public class SendGBN{
         socket.send(pkt);
 
         nextSeqNum = (byte)((nextSeqNum + 1) % MAX_SEQ_NUMBER);
-
-//        if (nextSeqNum == base){
-//            TimeModel.setTime(DELAY);
-//        }
-
-//        try {
-//            sleep(0,1);
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
 
     }
 
@@ -218,6 +251,7 @@ public class SendGBN{
         }
         byte flag = base ;
         base = (byte) ((ackn.ackk + 1) % MAX_SEQ_NUMBER);
+        ackno = (ackno + 1) % MAX_SEQ_NUMBER;
 
         if (base != flag){
 
@@ -255,18 +289,18 @@ public class SendGBN{
         nextSeqNum = base;
         unAckedPackets = 0;
 //
-//        ResetTimer();
+        ResetTimer();
 
-        for(int i = 0; i < N; i++) {
-            if(windowbuffer[nextSeqNum] == null){
+        for (int i = 0; i < config.SWSize; i++) {
+            if (windowbuffer[nextSeqNum] == null){
                 break;
             }
-            while(unAckedPackets == N){
+            while(unAckedPackets == config.SWSize){
                 Thread.yield();
             }
             System.out.println("resend packet seq" + nextSeqNum + " :                      " + windowbuffer[nextSeqNum]);
             System.out.println("");
-            sendPacket(windowbuffer[nextSeqNum],1);
+            sendPacket(windowbuffer[nextSeqNum],"TO");
 
         }
 
@@ -274,13 +308,35 @@ public class SendGBN{
         timeout = false;
     }
 
+    @Override
+    public void run() {
+
+        //create receiver thread
+        ACKListener rcv = new ACKListener();
+
+        rcv.start();
+
+
+        //start processing the user's data
+        try {
+            this.processUserData();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        rcv.interrupt();
+
+        timer.cancel();
+    }
+
 
     class ACKListener extends Thread{
         public void run(){
+            System.out.println("listener " + PORT + " start");
             try{
-                while(!done){
+                while(!Thread.interrupted()){
                     //listen for packet
-                    byte[] receiveData = new byte[BYTES_PER_PACKET];
+                    byte[] receiveData = new byte[config.DataSize];
                     DatagramPacket ack = new DatagramPacket(receiveData, receiveData.length);
 
                     ///////////////////////////////////////////
@@ -288,6 +344,7 @@ public class SendGBN{
                     // Get an incoming ACK packet
                     //
                     socket.receive(ack);
+                    System.out.println("listener " + PORT + " get ack");
 
                     //process it
                     receivePacket(ack);
@@ -298,7 +355,7 @@ public class SendGBN{
                 //Will enter here if the thread is listening for a packet
                 //when we quit, and that's ok.
             }
-
+            System.out.println("listener quit" + "port" + PORT);
         }
     }
 }

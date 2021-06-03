@@ -2,6 +2,7 @@ package pk;
 
 import java.net.*;
 import java.io.*;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -12,12 +13,14 @@ import static pk.Serializer.serializer;
 
 
 public class Receiver extends JPanel implements Runnable{
-    public static final int BYTES_PER_PACKET = 4096;
-    public static final int PORT = 7609;
-    public static final String LOST = "LOST";
-    public static final String RCVD = "RCVD";
-    public static final String SENT = "SENT";
-    public static final String RSNT = "RSNT";
+    volatile Args config = new Args();
+    public int PORT = 7609;
+    public static final String OK = "OK";
+    public static final String NoErr = "NoErr";
+    public static final String DataErr = "DataErr";
+    
+    public String recvfile = "";
+    public String logfile = "";
 
 
     Thread t;
@@ -29,8 +32,12 @@ public class Receiver extends JPanel implements Runnable{
     DatagramSocket socket;
     volatile boolean done;
 
-    public Receiver() throws IOException{
+    public Receiver(int port, String outpath, String logpath) throws IOException{
         super(new BorderLayout());
+
+        PORT = port;
+        recvfile = outpath;
+        logfile = logpath;
 
         packets = new Vector();
         ackPackets = new Vector();
@@ -92,13 +99,35 @@ public class Receiver extends JPanel implements Runnable{
     public void run(){
         byte expectedSequenceNumber = 0;
         //ack for packet 0 (not initially sent)
-        byte[] dataa = new byte[BYTES_PER_PACKET];
-        DatagramPacket ack = new DatagramPacket(dataa, BYTES_PER_PACKET);
-        while(!done){
-            //get the next packet
+        byte[] dataa = new byte[config.DataSize];
+        DatagramPacket ack = new DatagramPacket(dataa, config.DataSize);
 
-            byte[] data = new byte[BYTES_PER_PACKET];
-            DatagramPacket rp = new DatagramPacket(data, BYTES_PER_PACKET);
+        // open output file
+        BufferedWriter writer = null;
+        BufferedWriter ReLog = null;
+
+        try {
+            writer = new BufferedWriter(new FileWriter(recvfile));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH mm ss");
+//        String LogName = "E:\\ReLog\\" + df.format(new Date()) + ".txt";/
+        String LogName = recvfile + "-Receiver's Log.txt";
+        try {
+            ReLog = new BufferedWriter(new FileWriter(logfile));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        int flag = 0;
+
+        while(!done){
+
+            flag++;
+            //get the next packet
+            byte[] data = new byte[config.DataSize];
+            DatagramPacket rp = new DatagramPacket(data, config.DataSize);
             try{
                 //receive the packet
                 //System.err.println("Waiting.");
@@ -112,113 +141,150 @@ public class Receiver extends JPanel implements Runnable{
                 System.err.println("IOException occurred while receiving!");
             }
             //determine if the packet gets lost (somewhere)
-            double d = rng.nextDouble();
-            double p = Double.parseDouble(prob.getText());
-            boolean success = (d > p);
-            String msg = null;
-            if(success){ //lose it
-                msg = RCVD;
-            }
-            else{ //don't lose it
-                msg = LOST;
-            }
+            String msg = OK;
+            String LogData;
             //put the packet in a pocket.
             PacketPocket pack = new PacketPocket(rp, msg, PacketType.DATA);
+
+            String ackMsg;
+            MyPacket udp_ack;
+            byte[] udp_ack_bytes = null;
+            //if we got the packet we expected
+            if (pack.bool == true && pack.id == expectedSequenceNumber) {
+                ackMsg = OK;
+                LogData = flag + ", pdu_exp=" + expectedSequenceNumber + ", pdu_recv=" + pack.id + ", status=" + ackMsg + ", data=" + pack.line;
+                try {
+                    ReLog.write(LogData);
+                    ReLog.newLine();
+                    ReLog.flush();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }// write to file
+                System.out.println("received line  " + pack.line);
+                try {
+                    writer.write(pack.line);
+                    writer.newLine();
+                    writer.flush();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                // gengerate ack
+                udp_ack = new MyPacket(-1, expectedSequenceNumber, null);
+                System.out.println("port:" + PORT + "right ack: " + expectedSequenceNumber);
+                System.out.println("");
+                try {
+                    udp_ack_bytes = serializer.toBytes(udp_ack);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                ack.setData(udp_ack_bytes);
+
+                expectedSequenceNumber = (byte) ((expectedSequenceNumber + 1) % Byte.parseByte(N.getText()));
+            } else if(pack.bool == false){
+                ackMsg = DataErr;
+                LogData = flag + ", pdu_exp=" + expectedSequenceNumber + ", pdu_recv=" + pack.id + ", status=" + ackMsg ;
+                try {
+                    ReLog.write(LogData);
+                    ReLog.newLine();
+                    ReLog.flush();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                udp_ack = new MyPacket(-1, (byte) ((expectedSequenceNumber - 1) % Byte.parseByte(N.getText())), null);
+                System.out.println("wrong ack: " + (byte) ((expectedSequenceNumber - 1) % Byte.parseByte(N.getText())));
+                System.out.println("");
+
+                try {
+                    udp_ack_bytes = serializer.toBytes(udp_ack);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                ack.setData(udp_ack_bytes);
+
+            }
+            else{
+                ackMsg = NoErr;
+                LogData = flag + ", pdu_exp=" + expectedSequenceNumber + ", pdu_recv=" + pack.id + ", status=" + ackMsg;
+                try {
+                    ReLog.write(LogData);
+                    ReLog.newLine();
+                    ReLog.flush();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                udp_ack = new MyPacket(-1, (byte) ((expectedSequenceNumber - 1) % Byte.parseByte(N.getText())), null);
+                System.out.println("wrong ack: " + (byte) ((expectedSequenceNumber - 1) % Byte.parseByte(N.getText())));
+                System.out.println("");
+
+                try {
+                    udp_ack_bytes = serializer.toBytes(udp_ack);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                ack.setData(udp_ack_bytes);
+
+            }
+
             packets.add(pack);
 
-            if(success){
-                String ackMsg;
-                MyPacket udp_ack;
-                byte[] udp_ack_bytes = null;
-                //if we got the packet we expected
-                if(pack.id == expectedSequenceNumber){
-                    ackMsg = SENT;
+            ack.setAddress(rp.getAddress());
+            ack.setPort(rp.getPort());
 
-                    pack.OuttoTxt(pack.line);
-
-                    udp_ack = new MyPacket(-1,expectedSequenceNumber,null);
-                    System.out.println("right ack: "+expectedSequenceNumber);
-                    System.out.println("");
-                    try {
-                        udp_ack_bytes = serializer.toBytes(udp_ack);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-
-                    ack.setData(udp_ack_bytes);
-
-                    expectedSequenceNumber = (byte)((expectedSequenceNumber + 1) % Byte.parseByte(N.getText()));
-                }
-                else{
-                    ackMsg = RSNT;
-
-                    udp_ack = new MyPacket(-1,(byte)((expectedSequenceNumber - 1) % Byte.parseByte(N.getText())),null);
-                    System.out.println("wrong ack: "+(byte)((expectedSequenceNumber - 1) % Byte.parseByte(N.getText())));
-                    System.out.println("");
-
-                    try {
-                        udp_ack_bytes = serializer.toBytes(udp_ack);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-
-                    ack.setData(udp_ack_bytes);
-
-                }
-
-                ack.setAddress(rp.getAddress());
-                ack.setPort(rp.getPort());
-
-                try{
-                    socket.send(ack);
-                    //put the packet in a pocket.
-                    PacketPocket ackPack = new PacketPocket(ack, ackMsg, PacketType.ACK);
-                    ackPackets.add(ackPack);
-                }
-                catch(IOException ioe){
-                    System.err.println("IOException occurred " +
-                            "while sending!");
-                }
+            try {
+                socket.send(ack);
+                //put the packet in a pocket.
+                PacketPocket ackPack = new PacketPocket(ack, ackMsg, PacketType.ACK);
+                ackPackets.add(ackPack);
+            } catch (IOException ioe) {
+                System.err.println("IOException occurred " +
+                        "while sending!");
             }
 
 
-            //Tell the table it's model has changed
-            TableModel model = table.getModel();
-            if(model instanceof AbstractTableModel){
-                ((AbstractTableModel)model).fireTableDataChanged();
-            }
 
-            //Tell the ackTable it's model has changed
-            model = ackTable.getModel();
-            if(model instanceof AbstractTableModel){
-                ((AbstractTableModel)model).fireTableDataChanged();
-            }
+
+//            //Tell the table it's model has changed
+//            TableModel model = table.getModel();
+//            if(model instanceof AbstractTableModel){
+//                ((AbstractTableModel)model).fireTableDataChanged();
+//            }
+//
+//            //Tell the ackTable it's model has changed
+//            model = ackTable.getModel();
+//            if(model instanceof AbstractTableModel){
+//                ((AbstractTableModel)model).fireTableDataChanged();
+//            }
         }
+
     }
 
     static Random rng = new Random();
-    public static void main(String[] args) throws IOException{
-        String filename = null;
-
+    public static Thread getreceiver(int port, String savepath, String savelog) throws IOException{
+        
         //set up random number generator w/ non random seed
-        if(args.length >= 1){
-            int n = Integer.parseInt(args[0]);
-            rng = new Random(n);
-        }
+//        if(args.length >= 1){
+//            int n = Integer.parseInt(args[0]);
+//            rng = new Random(n);
+//        }
 
-        JFrame f = new JFrame("Packet receiver!");
-        Receiver r = new Receiver();
+//        JFrame f = new JFrame("Packet receiver!");
+        Receiver r = new Receiver(port, savepath, savelog);
 
-        f.getContentPane().add("Center", r);
-        f.addWindowListener(new WindowAdapter(){
-            public void windowClosing(WindowEvent e){
-                System.exit(0);
-            }
-        });
-
-        f.setSize(500,500);
-        f.show();
-        r.start();
+//        f.getContentPane().add("Center", r);
+//        f.addWindowListener(new WindowAdapter(){
+//            public void windowClosing(WindowEvent e){
+//                System.exit(0);
+//            }
+//        });
+//
+//        f.setSize(500,500);
+//        f.show();
+//        r.start();
+        return new Thread(r);
     }
 }
 
@@ -227,9 +293,11 @@ class PacketPocket extends Vector{
 
     DatagramPacket packet;
     byte id;
+    boolean bool;
     byte[] data;
     byte[] ndata = null;
     String line =null;
+
     public PacketPocket(DatagramPacket p, String status, PacketType type) {
 
         this.packet = p;
@@ -240,10 +308,14 @@ class PacketPocket extends Vector{
         add(packet.getPort());
         // recieve data packet
         if(type == PacketType.DATA){
-            if (CRC.crc_check(this.data))
+            if (CRC.crc_check(this.data)){
                 System.out.println("没啥错误");
-            else
+                this.bool = true;
+            }
+            else{
                 System.out.println("错了");
+                this.bool = false;
+            }
 
             this.ndata = new byte[this.data.length - 2];
             System.arraycopy(this.data,0,this.ndata,0,this.data.length-2);
@@ -282,24 +354,5 @@ class PacketPocket extends Vector{
 
     }
 
-    public static BufferedWriter writer;
-
-    static {
-        try {
-            writer = new BufferedWriter(new FileWriter("E:\\received.txt"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-    public void OuttoTxt(String line){
-        System.out.println("received line  "+line);
-        try {
-            writer.write(line);
-            writer.newLine();
-            writer.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-    }
+    
 }

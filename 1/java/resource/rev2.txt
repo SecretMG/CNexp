@@ -1,0 +1,12 @@
+多个线程访问一个对象中的方法时候，顺序是轮流执行的，并非同步执行的。
+多个对象访问一个同步方法时，运行结果是异步的（就是多个对象产生了多个锁。），哪个对象的线程先执行带synchronized关键字的方法，哪个对象的线程先执行，然后异步执行。
+A线程访问一个synchronized方法或synchronized同步块，B线程访问非synchronized方法或非synchronized同步块时候，B线程可以随意调用其他的非synchronized方法
+两个线程访问同一个对象的两个同步的方法时候，结果是同步执行的，不存在脏读的现象
+synchronized拥有锁重入的功能，也就是在使用synchronized时候，当一个线程得到一个对象锁时候，再次请求此对象锁是可以再次得到该对象的锁的。
+可重入锁也支持在父子类继承的环境中
+出现异常，锁自动释放。
+如果子类继承父类的synchronized方法（如：synchronized public void x(){}）时候，子类在重写的时候，如果不标注synchronized的话，子类就会吃掉“synchronized”，就是子类中的x方法是非synchronized，导致运行的时候并不同步。所以在重写的x（），子类就要就要写上synchronized，运行就是同步的。
+当一个线程访问一个synchronized同步块时，另一个线程仍然可以访问对象中的非synchronized（this）同步代码块。
+synchronized（非this对象）：如果一个类中有很多个synchronized方法，这时虽然能出现同步，但会受到阻塞，所以影响运行效率，但如果使用synchronized（非this对象），它与synchronized方法是异步的，不与其他同步方法争夺this锁
+同步代码块放在非同步synchronized方法中进行声明，线程调用是无序的，但是在使用synchronized（非this对象）,可以解决脏读的现象
+多个线程执行synchronized（非对象x）呈同步效果
