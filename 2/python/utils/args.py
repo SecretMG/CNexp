@@ -4,11 +4,11 @@
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    'my_ID',
-    help='本节点的ID'
+    'my_name',
+    help='本节点的名字（ID）'
 )
 parser.add_argument(
-    'my_File',
+    'init_file',
     help='本节点的初始化文件'
 )
 parser.add_argument(

@@ -1,24 +1,11 @@
 import os.path
 import socket
+import time
 
 from utils.args import args
+from DVNode import DVNode
 
 
-def setup(ports):
-    my_RoutingTable = {}
-    Unreachable = args.Unreachable
-    dir_folder = 'utils/params'
-    my_ID, my_File = args.my_ID, args.my_File
-    file_name = os.path.join(dir_folder, my_File)
-    with open(file_name) as file:
-        lines = file.readlines()
-        for line in lines:
-            line = line.strip()
-            if line:
-                neighbor, dist, port = line.split()
-                dist, port = int(dist), int(port)   # 除名字外都使用int类型
-                my_RoutingTable[neighbor] = (dist, port)
-    print(my_RoutingTable)
 
 
 
@@ -44,8 +31,10 @@ def main():
     for name, binding in bindings.items():
         binding.bind(socks[name])
 
-    setup(ports)
-
+    my_node = DVNode(args.my_name, (ip, ports[args.my_name]))
+    my_node.start(args.init_file)
+    time.sleep(3)
+    my_node.stop()
 
 
 if __name__ == '__main__':
