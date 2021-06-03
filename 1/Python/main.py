@@ -129,7 +129,7 @@ def main():
     # 全部开始
 
     # 还没有结束处理，所以只能强行停止 todo：改进结束处理
-    time.sleep(30)
+    time.sleep(300)
     alice_sws[port2].write_logs()   # 结束后再写入logs 防止频繁读写
     # bob_from_alice_rw.stop()
     # 还没办法停止receiver todo:重写receiver
