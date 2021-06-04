@@ -24,17 +24,27 @@ def main():
         'i': args.port9
     }
     socks = {}
-    bindings = {}
     for name in names:
         socks[name] = (ip, ports[name])
-        bindings[name] = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    for name, binding in bindings.items():
-        binding.bind(socks[name])
-
-    my_node = DVNode(args.my_name, (ip, ports[args.my_name]))
+    my_node = DVNode(args.my_name, socks[args.my_name], socks)
     my_node.start(args.init_file)
-    time.sleep(3)
-    my_node.stop()
+
+    while True:
+        command = input()
+        if command == 'k':
+            break
+        if command == 'p':
+            my_node.pause()
+        if command == 's':
+            my_node.restart(args.init_file)
+    logs = my_node.stop()
+
+    dir_logs = 'logs'
+    os.makedirs(dir_logs, exist_ok=True)
+    log_file = os.path.join(dir_logs, args.my_name + '.txt')
+    with open(log_file, 'a') as f:
+        for log in logs:
+            f.write(log)
 
 
 if __name__ == '__main__':

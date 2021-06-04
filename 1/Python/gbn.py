@@ -8,8 +8,6 @@
 发送窗口-超时控制定时器线程池
 发送窗口-文件读入
 接收窗口
-
-待完成：
 文件写入接口
 """
 
@@ -29,7 +27,7 @@ dir_out = 'outputs'
 
 
 def send_pdu(pdu, my_binding, target_sock):
-    # print("%s send pdu to %s:seq=%d, ack=%d info=%s\n" % (str(my_binding.getsockname()), str(target_sock), pdu.seq, pdu.ack, pdu.info[0:10]), end='')
+    # print("%s send pdu to %s:send_seq=%d, ack=%d info=%s\n" % (str(my_binding.getsockname()), str(target_sock), pdu.send_seq, pdu.ack, pdu.info[0:10]), end='')
     send_pack = error_with_rate(error_rate, pdu.bin_pack)  # 模拟在信道中发生的错误
     my_binding.sendto(send_pack, target_sock)   # 无论如何都需要传输
 
@@ -191,7 +189,7 @@ class SendingWindow:
                     slide_times = self.sw_nolist.index(self.sw_recvlist[0], 0, self.last_sent+1) + 1
                     for i in range(slide_times):
                         self.success_sent += 1
-                        # print("%s slide seq=%d , num of succeeded packet:%d\n" %
+                        # print("%s slide send_seq=%d , num of succeeded packet:%d\n" %
                         #     (str(self.mybinding.getsockname()), self.sw_nolist[0], self.success_sent), end='')
                         # timer向右滑动一位
                         if self.sw_timeouter[0] is not None:
@@ -233,7 +231,7 @@ class RecvingWindow:
         self.lastseq = -1
         # 接收窗口
         self.seq_expected = 0
-        # seq&info
+        # send_seq&info
         self.seq_and_info = []
         # 接收到的信息
         self.recv_info = []
@@ -289,7 +287,7 @@ class RecvingWindow:
                         with open(file, 'ab') as f:
                             f.write(info)
 
-                    print("%s received seq=%d, num of received packet:%d\n" %
+                    print("%s received send_seq=%d, num of received packet:%d\n" %
                           (self.my_binding.getsockname(), seq, len(self.recv_info)), end='')
 
                     self.lastseq = seq

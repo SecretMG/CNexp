@@ -61,7 +61,7 @@ def receiver(name, my_binding, sws):
         # 检测坏包
         if not crc_check(binpack):
             recver_logs.err_catch('RV_CHECK_ERR', my_binding.getsockname(), sender_ip, -1, -1, 'UNKNOWN')
-            # print(f'check crc error: seq={seq}, ack={ack}\n')
+            # print(f'check crc error: send_seq={send_seq}, ack={ack}\n')
             continue
         '''此时可以认为是正确的数据包'''
         port = sender_ip[1]

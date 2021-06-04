@@ -21,7 +21,7 @@ class Logs:
             'type': 'SEND',
             'subject': subject,
             'sendto': sendto,
-            'seq': seq,
+            'send_seq': seq,
             'ack': ack,
             'status': status
         }
@@ -34,7 +34,7 @@ class Logs:
             'type': 'RECV',
             'subject': subject,
             'recvfrom': recvfrom,
-            'seq': seq,
+            'send_seq': seq,
             'ack': ack,
             'status': status
         }
@@ -47,7 +47,7 @@ class Logs:
             'type': err_type,
             'subject': subject,
             'recvfrom': recvfrom,
-            'seq': seq,
+            'send_seq': seq,
             'ack': ack,
             'status': status
         }

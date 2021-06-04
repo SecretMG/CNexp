@@ -81,7 +81,7 @@ def unpack_pdu(bin_pack):
     解包
 
     :param bin_pack:
-    :return: seq, ack, 未解码info
+    :return: send_seq, ack, 未解码info
     """
     seq, ack, info, check_num = struct.unpack('>hh%dsH' % args.data_size, bin_pack)
     return seq, ack, info
@@ -91,7 +91,7 @@ class PDU:
     """
     数据传输单元, 二进制串bin_pack传输，大小为self.size
                 Byte
-    seq         2
+    send_seq         2
     ack         2
     info        data_size
     checksum    2
