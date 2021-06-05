@@ -3,7 +3,7 @@ import os
 import socket
 import datetime
 
-from threading import Thread, Event
+from threading import Thread, Event, Timer
 from time import sleep
 from utils.args import args
 
@@ -23,6 +23,9 @@ class DVNode:
         self.logs = []
         self.send_seq = 1
         self.recv_seq = 1
+
+        self.to_seconds = 15         # 超时时间
+        self.timer_pool = {}        # Timer线程池
 
         self.__thread_sending = Thread(target=self.__thread_send)
         self.__thread_recving = Thread(target=self.__thread_recv)
@@ -81,6 +84,16 @@ class DVNode:
                     continue
                 recv_table = recv_table.decode()
                 recv_table = json.loads(recv_table)
+
+                # 如果收到，则重置timer
+                sock_name = {v: k for k, v in self.neighbors.items()}       # 反转下neighbors
+                name = sock_name[sender_ip]
+                print(f'收到{name}的表，重置超时计时器')
+                # 重置Timer并启动
+                self.timer_pool[name].cancel()
+                self.timer_pool[name] = Timer(self.to_seconds, self.__task_timeout, args=name)
+                self.timer_pool[name].start()
+
                 self.__update_table(recv_table)
         print("recv_thread end.")
 
@@ -97,6 +110,9 @@ class DVNode:
                     dist, port = int(dist), int(port)  # 除名字外都使用int类型
                     self.Routing_Table[neighbor] = (dist, port)
                     self.neighbors[neighbor] = self.socks[neighbor]
+                    # 为每一个neighbor添加超时线程并启动
+                    self.timer_pool[neighbor] = Timer(self.to_seconds, self.__task_timeout, args=neighbor)
+                    self.timer_pool[neighbor].start()
 
     def __send_table(self):
         send_table = {}  # 目的节点：（距离，发送节点name）
@@ -138,3 +154,7 @@ class DVNode:
             print(f'DestNode = {to_name}; Distance = {dist}')
             log += f'DestNode = {to_name}; Distance = {dist}\n'
         self.logs.append(log)
+
+    def __task_timeout(self, id):
+        # 超时后的任务
+        print(f'{id} time out')
