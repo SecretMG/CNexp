@@ -21,13 +21,12 @@ from utils import get_timestamp
 from logs import Logs
 import json
 
-error_rate = 0
-loss_rate = 0.01
+error_rate = 0.05
+loss_rate = 0
 dir_out = 'outputs'
 
 
 def send_pdu(pdu, my_binding, target_sock):
-    # print("%s send pdu to %s:send_seq=%d, ack=%d info=%s\n" % (str(my_binding.getsockname()), str(target_sock), pdu.send_seq, pdu.ack, pdu.info[0:10]), end='')
     send_pack = error_with_rate(error_rate, pdu.bin_pack)  # 模拟在信道中发生的错误
     my_binding.sendto(send_pack, target_sock)   # 无论如何都需要传输
 
@@ -39,6 +38,7 @@ class SendingWindow:
         self.target = sendto_sock
         self.filelist = filelist
         self.fileptr = args.sending_window_size - 1
+        self.list_len = len(filelist)
 
         '''Events'''
         self.__event_mainthread = Event()
@@ -154,7 +154,7 @@ class SendingWindow:
             self.__event_timer.wait()
             self.__event_timeout.wait()
             # 停止发送和滑动
-            print("等待结束发送滑动线程\n", end='')
+            # print("等待结束发送滑动线程\n", end='')
             self.__event_mainthread.clear()
             self.__event_endsend.wait()
             self.__event_endslide.wait()
@@ -162,7 +162,7 @@ class SendingWindow:
             for i in self.sw_timeouter:
                 if i is not None:
                     i.cancel()
-            print("计数器线程池清理完成\n", end='')
+            # print("计数器线程池清理完成\n", end='')
             self.have_sent = self.last_sent
             self.last_sent = -1
             self.TO_flag = True
@@ -173,11 +173,11 @@ class SendingWindow:
     def __thread_timeout(self):
         # 超时一定是最先出发的超时，这样更安全
         if self.__event_timeout.is_set():
-            print("已触发\n", end='')
+            # print("已触发\n", end='')
             return
         else:
             self.__event_timeout.set()
-            print("超时触发\n", end='')
+            # print("超时触发\n", end='')
 
     def __thread_slide(self):
         while self.__running.is_set():
@@ -189,8 +189,6 @@ class SendingWindow:
                     slide_times = self.sw_nolist.index(self.sw_recvlist[0], 0, self.last_sent+1) + 1
                     for i in range(slide_times):
                         self.success_sent += 1
-                        # print("%s slide send_seq=%d , num of succeeded packet:%d\n" %
-                        #     (str(self.mybinding.getsockname()), self.sw_nolist[0], self.success_sent), end='')
                         # timer向右滑动一位
                         if self.sw_timeouter[0] is not None:
                             self.sw_timeouter[0].cancel()
@@ -210,6 +208,7 @@ class SendingWindow:
                             self.sw_pdulist[-1].update(seq=self.sw_nolist[-1], info=b'#')
                         else:
                             self.sw_pdulist[-1].update(seq=self.sw_nolist[-1], info=self.filelist[self.fileptr])
+
             self.sw_recvlist.pop(0)
             self.__event_slide.clear()
             self.__event_endslide.set()
@@ -260,10 +259,9 @@ class RecvingWindow:
         print(f"{file_name} Done.")
 
     def __main_thread(self):
+        p = PDU(info=b'ACK PACKET')
         while self.__running.is_set():
             self.__event_mainthread.wait()  # 此时主信号=True
-
-            p = PDU(info=b'ACK PACKET')
 
             if len(self.seq_and_info) != 0:
                 seq, info = self.seq_and_info.pop(0)
@@ -286,9 +284,6 @@ class RecvingWindow:
                         file = f'{self.path}/{self.file_out}.txt'
                         with open(file, 'ab') as f:
                             f.write(info)
-
-                    print("%s received send_seq=%d, num of received packet:%d\n" %
-                          (self.my_binding.getsockname(), seq, len(self.recv_info)), end='')
 
                     self.lastseq = seq
                     self.seq_expected = (seq + 1) % args.max_sending_no

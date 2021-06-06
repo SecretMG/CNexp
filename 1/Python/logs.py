@@ -25,7 +25,7 @@ class Logs:
             'ack': ack,
             'status': status
         }
-        print(log)
+        # print(log)
         self.log_list.append(log)
 
     def recv_catch(self, subject, recvfrom, seq, ack, status):
@@ -38,7 +38,7 @@ class Logs:
             'ack': ack,
             'status': status
         }
-        print(log)
+        # print(log)
         self.log_list.append(log)
 
     def err_catch(self, err_type, subject, recvfrom, seq, ack, status):
