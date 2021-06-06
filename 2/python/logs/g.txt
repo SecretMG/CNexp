@@ -34,3 +34,519 @@ DestNode = i; Distance = 50; Neighbor = 42336
 DestNode = g; Distance = 0; Neighbor = 42334
 DestNode = h; Distance = 4; Neighbor = 42335
 DestNode = i; Distance = 50; Neighbor = 42336
+## Sent. Source Node= g; Sequence Number = 1, time = 2021-06-06 13:10:23.836115
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 4; Neighbor = 42335
+DestNode = i; Distance = 50; Neighbor = 42336
+## Sent. Source Node= g; Sequence Number = 2, time = 2021-06-06 13:10:28.846707
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 4; Neighbor = 42335
+DestNode = i; Distance = 50; Neighbor = 42336
+## Received. Source Node= h; Sequence Number = 1, time = 2021-06-06 13:10:28.924504
+DestNode = h; Distance = 0, Neighbor = 42335
+DestNode = g; Distance = 4, Neighbor = 42334
+DestNode = i; Distance = 1, Neighbor = 42336
+## Sent. Source Node= g; Sequence Number = 3, time = 2021-06-06 13:10:33.859511
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 4; Neighbor = 42335
+DestNode = i; Distance = 5; Neighbor = h
+## Received. Source Node= h; Sequence Number = 2, time = 2021-06-06 13:10:33.937086
+DestNode = h; Distance = 0, Neighbor = 42335
+DestNode = g; Distance = 4, Neighbor = 42334
+DestNode = i; Distance = 1, Neighbor = 42336
+## Received. Source Node= i; Sequence Number = 3, time = 2021-06-06 13:10:34.295131
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 5, Neighbor = h
+DestNode = h; Distance = 1, Neighbor = 42335
+## Sent. Source Node= g; Sequence Number = 4, time = 2021-06-06 13:10:38.866086
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 4; Neighbor = 42335
+DestNode = i; Distance = 5; Neighbor = h
+## Received. Source Node= h; Sequence Number = 4, time = 2021-06-06 13:10:38.944693
+DestNode = h; Distance = 0, Neighbor = 42335
+DestNode = g; Distance = 4, Neighbor = 42334
+DestNode = i; Distance = 1, Neighbor = 42336
+## Received. Source Node= i; Sequence Number = 5, time = 2021-06-06 13:10:39.310709
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 5, Neighbor = h
+DestNode = h; Distance = 1, Neighbor = 42335
+## Sent. Source Node= g; Sequence Number = 5, time = 2021-06-06 13:10:43.882687
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 4; Neighbor = 42335
+DestNode = i; Distance = 5; Neighbor = h
+## Received. Source Node= h; Sequence Number = 6, time = 2021-06-06 13:10:43.961264
+DestNode = h; Distance = 0, Neighbor = 42335
+DestNode = g; Distance = 4, Neighbor = 42334
+DestNode = i; Distance = 1, Neighbor = 42336
+## Received. Source Node= i; Sequence Number = 7, time = 2021-06-06 13:10:44.325291
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 5, Neighbor = h
+DestNode = h; Distance = 1, Neighbor = 42335
+## Sent. Source Node= g; Sequence Number = 6, time = 2021-06-06 13:10:48.904035
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 4; Neighbor = 42335
+DestNode = i; Distance = 5; Neighbor = h
+## Received. Source Node= h; Sequence Number = 8, time = 2021-06-06 13:10:48.981832
+DestNode = h; Distance = 0, Neighbor = 42335
+DestNode = g; Distance = 4, Neighbor = 42334
+DestNode = i; Distance = 1, Neighbor = 42336
+## Received. Source Node= i; Sequence Number = 9, time = 2021-06-06 13:10:49.339875
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 5, Neighbor = h
+DestNode = h; Distance = 1, Neighbor = 42335
+## Sent. Source Node= g; Sequence Number = 7, time = 2021-06-06 13:10:53.918829
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 4; Neighbor = 42335
+DestNode = i; Distance = 5; Neighbor = h
+## Received. Source Node= h; Sequence Number = 10, time = 2021-06-06 13:10:53.997409
+DestNode = h; Distance = 0, Neighbor = 42335
+DestNode = g; Distance = 4, Neighbor = 42334
+DestNode = i; Distance = 1, Neighbor = 42336
+## Received. Source Node= i; Sequence Number = 11, time = 2021-06-06 13:10:54.357445
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 5, Neighbor = h
+DestNode = h; Distance = 1, Neighbor = 42335
+## Sent. Source Node= g; Sequence Number = 8, time = 2021-06-06 13:10:58.931418
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 4; Neighbor = 42335
+DestNode = i; Distance = 5; Neighbor = h
+## Received. Source Node= h; Sequence Number = 12, time = 2021-06-06 13:10:59.011985
+DestNode = h; Distance = 0, Neighbor = 42335
+DestNode = g; Distance = 4, Neighbor = 42334
+DestNode = i; Distance = 1, Neighbor = 42336
+## Received. Source Node= i; Sequence Number = 13, time = 2021-06-06 13:10:59.368035
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 5, Neighbor = h
+DestNode = h; Distance = 1, Neighbor = 42335
+## Sent. Source Node= g; Sequence Number = 9, time = 2021-06-06 13:11:03.941983
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 4; Neighbor = 42335
+DestNode = i; Distance = 5; Neighbor = h
+## Received. Source Node= h; Sequence Number = 14, time = 2021-06-06 13:11:04.022580
+DestNode = h; Distance = 0, Neighbor = 42335
+DestNode = g; Distance = 4, Neighbor = 42334
+DestNode = i; Distance = 1, Neighbor = 42336
+## Received. Source Node= i; Sequence Number = 15, time = 2021-06-06 13:11:04.383612
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 5, Neighbor = h
+DestNode = h; Distance = 1, Neighbor = 42335
+## Sent. Source Node= g; Sequence Number = 10, time = 2021-06-06 13:11:08.961580
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 4; Neighbor = 42335
+DestNode = i; Distance = 5; Neighbor = h
+## Received. Source Node= h; Sequence Number = 16, time = 2021-06-06 13:11:09.040158
+DestNode = h; Distance = 0, Neighbor = 42335
+DestNode = g; Distance = 4, Neighbor = 42334
+DestNode = i; Distance = 1, Neighbor = 42336
+## Received. Source Node= i; Sequence Number = 17, time = 2021-06-06 13:11:09.406175
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 5, Neighbor = h
+DestNode = h; Distance = 1, Neighbor = 42335
+## Sent. Source Node= g; Sequence Number = 11, time = 2021-06-06 13:11:13.978094
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 4; Neighbor = 42335
+DestNode = i; Distance = 5; Neighbor = h
+## Received. Source Node= h; Sequence Number = 18, time = 2021-06-06 13:11:14.055887
+DestNode = h; Distance = 0, Neighbor = 42335
+DestNode = g; Distance = 4, Neighbor = 42334
+DestNode = i; Distance = 1, Neighbor = 42336
+## Received. Source Node= i; Sequence Number = 19, time = 2021-06-06 13:11:14.425897
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 5, Neighbor = h
+DestNode = h; Distance = 1, Neighbor = 42335
+## Sent. Source Node= g; Sequence Number = 12, time = 2021-06-06 13:11:19.004601
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 4; Neighbor = 42335
+DestNode = i; Distance = 5; Neighbor = h
+## Received. Source Node= h; Sequence Number = 20, time = 2021-06-06 13:11:19.066432
+DestNode = h; Distance = 0, Neighbor = 42335
+DestNode = g; Distance = 4, Neighbor = 42334
+DestNode = i; Distance = 1, Neighbor = 42336
+## Received. Source Node= i; Sequence Number = 21, time = 2021-06-06 13:11:19.443426
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 5, Neighbor = h
+DestNode = h; Distance = 1, Neighbor = 42335
+## Sent. Source Node= g; Sequence Number = 13, time = 2021-06-06 13:11:24.019401
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 4; Neighbor = 42335
+DestNode = i; Distance = 5; Neighbor = h
+## Received. Source Node= h; Sequence Number = 22, time = 2021-06-06 13:11:24.083019
+DestNode = h; Distance = 0, Neighbor = 42335
+DestNode = g; Distance = 4, Neighbor = 42334
+DestNode = i; Distance = 1, Neighbor = 42336
+## Received. Source Node= i; Sequence Number = 23, time = 2021-06-06 13:11:24.462998
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 5, Neighbor = h
+DestNode = h; Distance = 1, Neighbor = 42335
+## Sent. Source Node= g; Sequence Number = 14, time = 2021-06-06 13:11:29.028957
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 4; Neighbor = 42335
+DestNode = i; Distance = 5; Neighbor = h
+## Received. Source Node= h; Sequence Number = 24, time = 2021-06-06 13:11:29.093600
+DestNode = h; Distance = 0, Neighbor = 42335
+DestNode = g; Distance = 4, Neighbor = 42334
+DestNode = i; Distance = 1, Neighbor = 42336
+## Received. Source Node= i; Sequence Number = 25, time = 2021-06-06 13:11:29.484556
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 5, Neighbor = h
+DestNode = h; Distance = 1, Neighbor = 42335
+## Sent. Source Node= g; Sequence Number = 15, time = 2021-06-06 13:11:34.041520
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 4; Neighbor = 42335
+DestNode = i; Distance = 5; Neighbor = h
+## Received. Source Node= h; Sequence Number = 26, time = 2021-06-06 13:11:34.105193
+DestNode = h; Distance = 0, Neighbor = 42335
+DestNode = g; Distance = 4, Neighbor = 42334
+DestNode = i; Distance = 1, Neighbor = 42336
+## Received. Source Node= i; Sequence Number = 27, time = 2021-06-06 13:11:34.495147
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 5, Neighbor = h
+DestNode = h; Distance = 1, Neighbor = 42335
+## Sent. Source Node= g; Sequence Number = 16, time = 2021-06-06 13:11:39.061147
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 4; Neighbor = 42335
+DestNode = i; Distance = 5; Neighbor = h
+## Received. Source Node= h; Sequence Number = 28, time = 2021-06-06 13:11:39.124758
+DestNode = h; Distance = 0, Neighbor = 42335
+DestNode = g; Distance = 4, Neighbor = 42334
+DestNode = i; Distance = 1, Neighbor = 42336
+## Received. Source Node= i; Sequence Number = 29, time = 2021-06-06 13:11:39.504744
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 5, Neighbor = h
+DestNode = h; Distance = 1, Neighbor = 42335
+## Sent. Source Node= g; Sequence Number = 17, time = 2021-06-06 13:11:44.080042
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 4; Neighbor = 42335
+DestNode = i; Distance = 5; Neighbor = h
+## Received. Source Node= h; Sequence Number = 30, time = 2021-06-06 13:11:44.144658
+DestNode = h; Distance = 0, Neighbor = 42335
+DestNode = g; Distance = 4, Neighbor = 42334
+DestNode = i; Distance = 1, Neighbor = 42336
+## Received. Source Node= i; Sequence Number = 31, time = 2021-06-06 13:11:44.522648
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 5, Neighbor = h
+DestNode = h; Distance = 1, Neighbor = 42335
+## Sent. Source Node= g; Sequence Number = 18, time = 2021-06-06 13:11:49.093991
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 4; Neighbor = 42335
+DestNode = i; Distance = 5; Neighbor = h
+## Received. Source Node= h; Sequence Number = 32, time = 2021-06-06 13:11:49.157605
+DestNode = h; Distance = 0, Neighbor = 42335
+DestNode = g; Distance = 4, Neighbor = 42334
+DestNode = i; Distance = 1, Neighbor = 42336
+## Received. Source Node= i; Sequence Number = 33, time = 2021-06-06 13:11:49.532601
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 5, Neighbor = h
+DestNode = h; Distance = 1, Neighbor = 42335
+## Sent. Source Node= g; Sequence Number = 19, time = 2021-06-06 13:11:54.103582
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 4; Neighbor = 42335
+DestNode = i; Distance = 5; Neighbor = h
+## Received. Source Node= h; Sequence Number = 34, time = 2021-06-06 13:11:54.167232
+DestNode = h; Distance = 0, Neighbor = 42335
+DestNode = g; Distance = 4, Neighbor = 42334
+DestNode = i; Distance = 1, Neighbor = 42336
+## Received. Source Node= i; Sequence Number = 35, time = 2021-06-06 13:11:54.543189
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 5, Neighbor = h
+DestNode = h; Distance = 1, Neighbor = 42335
+## Sent. Source Node= g; Sequence Number = 20, time = 2021-06-06 13:11:59.115180
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 4; Neighbor = 42335
+DestNode = i; Distance = 5; Neighbor = h
+## Received. Source Node= h; Sequence Number = 36, time = 2021-06-06 13:11:59.179785
+DestNode = h; Distance = 0, Neighbor = 42335
+DestNode = g; Distance = 4, Neighbor = 42334
+DestNode = i; Distance = 1, Neighbor = 42336
+## Received. Source Node= i; Sequence Number = 37, time = 2021-06-06 13:11:59.568742
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 5, Neighbor = h
+DestNode = h; Distance = 1, Neighbor = 42335
+## Sent. Source Node= g; Sequence Number = 21, time = 2021-06-06 13:12:04.123804
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 4; Neighbor = 42335
+DestNode = i; Distance = 5; Neighbor = h
+## Received. Source Node= h; Sequence Number = 38, time = 2021-06-06 13:12:04.186454
+DestNode = h; Distance = 0, Neighbor = 42335
+DestNode = g; Distance = 4, Neighbor = 42334
+DestNode = i; Distance = 1, Neighbor = 42336
+## Received. Source Node= i; Sequence Number = 39, time = 2021-06-06 13:12:04.583392
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 5, Neighbor = h
+DestNode = h; Distance = 1, Neighbor = 42335
+## Sent. Source Node= g; Sequence Number = 22, time = 2021-06-06 13:12:09.138229
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 4; Neighbor = 42335
+DestNode = i; Distance = 5; Neighbor = h
+## Received. Source Node= h; Sequence Number = 40, time = 2021-06-06 13:12:09.200073
+DestNode = h; Distance = 0, Neighbor = 42335
+DestNode = g; Distance = 4, Neighbor = 42334
+DestNode = i; Distance = 1, Neighbor = 42336
+## Received. Source Node= i; Sequence Number = 41, time = 2021-06-06 13:12:09.606949
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 5, Neighbor = h
+DestNode = h; Distance = 1, Neighbor = 42335
+## Sent. Source Node= g; Sequence Number = 23, time = 2021-06-06 13:12:14.151290
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 4; Neighbor = 42335
+DestNode = i; Distance = 5; Neighbor = h
+## Received. Source Node= i; Sequence Number = 42, time = 2021-06-06 13:12:14.623847
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 5, Neighbor = h
+DestNode = h; Distance = 1, Neighbor = 42335
+## Received. Source Node= i; Sequence Number = 43, time = 2021-06-06 13:12:19.629412
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 5, Neighbor = h
+DestNode = h; Distance = 1, Neighbor = 42335
+h time outi time out## Received. Source Node= i; Sequence Number = 44, time = 2021-06-06 13:12:53.970023
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 5, Neighbor = h
+DestNode = h; Distance = 1, Neighbor = 42335
+## Received. Source Node= i; Sequence Number = 45, time = 2021-06-06 13:12:53.972023
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 5, Neighbor = h
+DestNode = h; Distance = 1, Neighbor = 42335
+## Received. Source Node= i; Sequence Number = 46, time = 2021-06-06 13:12:53.973015
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 5, Neighbor = h
+DestNode = h; Distance = 100.0, Neighbor = 42335
+## Received. Source Node= i; Sequence Number = 47, time = 2021-06-06 13:12:53.974018
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 100.0, Neighbor = h
+DestNode = h; Distance = 100.0, Neighbor = 42335
+## Received. Source Node= i; Sequence Number = 48, time = 2021-06-06 13:12:53.976007
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 100.0, Neighbor = h
+DestNode = h; Distance = 100.0, Neighbor = 42335
+## Received. Source Node= i; Sequence Number = 49, time = 2021-06-06 13:12:53.977004
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 100.0, Neighbor = h
+DestNode = h; Distance = 100.0, Neighbor = 42335
+## Sent. Source Node= g; Sequence Number = 24, time = 2021-06-06 13:12:54.319090
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 1; Neighbor = 42335
+DestNode = i; Distance = 50; Neighbor = 42336
+## Received. Source Node= i; Sequence Number = 50, time = 2021-06-06 13:12:54.682156
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 100.0, Neighbor = h
+DestNode = h; Distance = 100.0, Neighbor = 42335
+## Sent. Source Node= g; Sequence Number = 25, time = 2021-06-06 13:12:59.325910
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 1; Neighbor = 42335
+DestNode = i; Distance = 50; Neighbor = 42336
+## Received. Source Node= h; Sequence Number = 51, time = 2021-06-06 13:12:59.435400
+DestNode = h; Distance = 0, Neighbor = 42335
+DestNode = g; Distance = 1, Neighbor = 42334
+DestNode = i; Distance = 1, Neighbor = 42336
+## Received. Source Node= i; Sequence Number = 52, time = 2021-06-06 13:12:59.700696
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 100.0, Neighbor = h
+DestNode = h; Distance = 100.0, Neighbor = 42335
+## Sent. Source Node= g; Sequence Number = 26, time = 2021-06-06 13:13:04.343342
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 1; Neighbor = 42335
+DestNode = i; Distance = 2; Neighbor = h
+## Received. Source Node= h; Sequence Number = 53, time = 2021-06-06 13:13:04.450981
+DestNode = h; Distance = 0, Neighbor = 42335
+DestNode = g; Distance = 1, Neighbor = 42334
+DestNode = i; Distance = 1, Neighbor = 42336
+## Received. Source Node= i; Sequence Number = 54, time = 2021-06-06 13:13:04.719263
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 100.0, Neighbor = h
+DestNode = h; Distance = 100.0, Neighbor = 42335
+## Sent. Source Node= g; Sequence Number = 27, time = 2021-06-06 13:13:09.355322
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 1; Neighbor = 42335
+DestNode = i; Distance = 2; Neighbor = h
+## Received. Source Node= h; Sequence Number = 55, time = 2021-06-06 13:13:09.464808
+DestNode = h; Distance = 0, Neighbor = 42335
+DestNode = g; Distance = 1, Neighbor = 42334
+DestNode = i; Distance = 1, Neighbor = 42336
+## Received. Source Node= i; Sequence Number = 56, time = 2021-06-06 13:13:09.746063
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 100.0, Neighbor = h
+DestNode = h; Distance = 100.0, Neighbor = 42335
+## Sent. Source Node= g; Sequence Number = 28, time = 2021-06-06 13:13:14.368856
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 1; Neighbor = 42335
+DestNode = i; Distance = 2; Neighbor = h
+## Received. Source Node= h; Sequence Number = 57, time = 2021-06-06 13:13:14.480384
+DestNode = h; Distance = 0, Neighbor = 42335
+DestNode = g; Distance = 1, Neighbor = 42334
+DestNode = i; Distance = 1, Neighbor = 42336
+## Received. Source Node= i; Sequence Number = 58, time = 2021-06-06 13:13:14.764624
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 100.0, Neighbor = h
+DestNode = h; Distance = 100.0, Neighbor = 42335
+## Sent. Source Node= g; Sequence Number = 29, time = 2021-06-06 13:13:19.379476
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 1; Neighbor = 42335
+DestNode = i; Distance = 2; Neighbor = h
+## Received. Source Node= h; Sequence Number = 59, time = 2021-06-06 13:13:19.491971
+DestNode = h; Distance = 0, Neighbor = 42335
+DestNode = g; Distance = 1, Neighbor = 42334
+DestNode = i; Distance = 1, Neighbor = 42336
+## Received. Source Node= i; Sequence Number = 60, time = 2021-06-06 13:13:19.788179
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 100.0, Neighbor = h
+DestNode = h; Distance = 100.0, Neighbor = 42335
+## Sent. Source Node= g; Sequence Number = 30, time = 2021-06-06 13:13:24.397075
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 1; Neighbor = 42335
+DestNode = i; Distance = 2; Neighbor = h
+## Received. Source Node= h; Sequence Number = 61, time = 2021-06-06 13:13:24.506554
+DestNode = h; Distance = 0, Neighbor = 42335
+DestNode = g; Distance = 1, Neighbor = 42334
+DestNode = i; Distance = 1, Neighbor = 42336
+## Received. Source Node= i; Sequence Number = 62, time = 2021-06-06 13:13:24.801764
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 100.0, Neighbor = h
+DestNode = h; Distance = 100.0, Neighbor = 42335
+## Sent. Source Node= g; Sequence Number = 31, time = 2021-06-06 13:13:29.407896
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 1; Neighbor = 42335
+DestNode = i; Distance = 2; Neighbor = h
+## Received. Source Node= h; Sequence Number = 63, time = 2021-06-06 13:13:29.519417
+DestNode = h; Distance = 0, Neighbor = 42335
+DestNode = g; Distance = 1, Neighbor = 42334
+DestNode = i; Distance = 1, Neighbor = 42336
+## Received. Source Node= i; Sequence Number = 64, time = 2021-06-06 13:13:29.817576
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 100.0, Neighbor = h
+DestNode = h; Distance = 100.0, Neighbor = 42335
+## Sent. Source Node= g; Sequence Number = 32, time = 2021-06-06 13:13:34.418509
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 1; Neighbor = 42335
+DestNode = i; Distance = 2; Neighbor = h
+## Received. Source Node= h; Sequence Number = 65, time = 2021-06-06 13:13:34.530166
+DestNode = h; Distance = 0, Neighbor = 42335
+DestNode = g; Distance = 1, Neighbor = 42334
+DestNode = i; Distance = 1, Neighbor = 42336
+## Received. Source Node= i; Sequence Number = 66, time = 2021-06-06 13:13:34.825378
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 100.0, Neighbor = h
+DestNode = h; Distance = 100.0, Neighbor = 42335
+## Sent. Source Node= g; Sequence Number = 33, time = 2021-06-06 13:13:39.444193
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 1; Neighbor = 42335
+DestNode = i; Distance = 2; Neighbor = h
+## Received. Source Node= h; Sequence Number = 67, time = 2021-06-06 13:13:39.538764
+DestNode = h; Distance = 0, Neighbor = 42335
+DestNode = g; Distance = 1, Neighbor = 42334
+DestNode = i; Distance = 1, Neighbor = 42336
+## Received. Source Node= i; Sequence Number = 68, time = 2021-06-06 13:13:39.839961
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 100.0, Neighbor = h
+DestNode = h; Distance = 100.0, Neighbor = 42335
+## Sent. Source Node= g; Sequence Number = 34, time = 2021-06-06 13:13:44.463812
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 1; Neighbor = 42335
+DestNode = i; Distance = 2; Neighbor = h
+## Received. Source Node= h; Sequence Number = 69, time = 2021-06-06 13:13:44.558334
+DestNode = h; Distance = 0, Neighbor = 42335
+DestNode = g; Distance = 1, Neighbor = 42334
+DestNode = i; Distance = 1, Neighbor = 42336
+## Received. Source Node= i; Sequence Number = 70, time = 2021-06-06 13:13:44.852546
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 100.0, Neighbor = h
+DestNode = h; Distance = 100.0, Neighbor = 42335
+## Sent. Source Node= g; Sequence Number = 35, time = 2021-06-06 13:13:49.474444
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 1; Neighbor = 42335
+DestNode = i; Distance = 2; Neighbor = h
+## Received. Source Node= h; Sequence Number = 71, time = 2021-06-06 13:13:49.570968
+DestNode = h; Distance = 0, Neighbor = 42335
+DestNode = g; Distance = 1, Neighbor = 42334
+DestNode = i; Distance = 1, Neighbor = 42336
+## Received. Source Node= i; Sequence Number = 72, time = 2021-06-06 13:13:49.871195
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 100.0, Neighbor = h
+DestNode = h; Distance = 100.0, Neighbor = 42335
+## Sent. Source Node= g; Sequence Number = 36, time = 2021-06-06 13:13:54.481046
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 1; Neighbor = 42335
+DestNode = i; Distance = 2; Neighbor = h
+## Received. Source Node= h; Sequence Number = 73, time = 2021-06-06 13:13:54.591535
+DestNode = h; Distance = 0, Neighbor = 42335
+DestNode = g; Distance = 1, Neighbor = 42334
+DestNode = i; Distance = 1, Neighbor = 42336
+## Received. Source Node= i; Sequence Number = 74, time = 2021-06-06 13:13:54.887741
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 100.0, Neighbor = h
+DestNode = h; Distance = 100.0, Neighbor = 42335
+## Received. Source Node= i; Sequence Number = 75, time = 2021-06-06 13:14:10.991683
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 100.0, Neighbor = h
+DestNode = h; Distance = 100.0, Neighbor = 42335
+## Received. Source Node= i; Sequence Number = 76, time = 2021-06-06 13:14:10.993640
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 100.0, Neighbor = h
+DestNode = h; Distance = 100.0, Neighbor = 42335
+## Received. Source Node= h; Sequence Number = 77, time = 2021-06-06 13:14:10.995634
+DestNode = h; Distance = 0, Neighbor = 42335
+DestNode = g; Distance = 60, Neighbor = 42334
+DestNode = i; Distance = 1, Neighbor = 42336
+## Received. Source Node= i; Sequence Number = 78, time = 2021-06-06 13:14:10.996633
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 100.0, Neighbor = h
+DestNode = h; Distance = 100.0, Neighbor = 42335
+## Sent. Source Node= g; Sequence Number = 37, time = 2021-06-06 13:14:14.574250
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 60; Neighbor = 42335
+DestNode = i; Distance = 50; Neighbor = 42336
+## Received. Source Node= h; Sequence Number = 79, time = 2021-06-06 13:14:14.667811
+DestNode = h; Distance = 0, Neighbor = 42335
+DestNode = g; Distance = 60, Neighbor = 42334
+DestNode = i; Distance = 1, Neighbor = 42336
+## Received. Source Node= i; Sequence Number = 80, time = 2021-06-06 13:14:14.952055
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 100.0, Neighbor = h
+DestNode = h; Distance = 100.0, Neighbor = 42335
+## Sent. Source Node= g; Sequence Number = 38, time = 2021-06-06 13:14:19.588109
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 60; Neighbor = 42335
+DestNode = i; Distance = 50; Neighbor = 42336
+h time out## Received. Source Node= h; Sequence Number = 81, time = 2021-06-06 13:14:19.683679
+DestNode = h; Distance = 0, Neighbor = 42335
+DestNode = g; Distance = 100.0, Neighbor = 42334
+DestNode = i; Distance = 1, Neighbor = 42336
+i time out## Received. Source Node= i; Sequence Number = 82, time = 2021-06-06 13:14:19.964927
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 100.0, Neighbor = h
+DestNode = h; Distance = 100.0, Neighbor = 42335
+## Sent. Source Node= g; Sequence Number = 39, time = 2021-06-06 13:14:24.596780
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 100.0; Neighbor = 42335
+DestNode = i; Distance = 100.0; Neighbor = 42336
+## Received. Source Node= h; Sequence Number = 83, time = 2021-06-06 13:14:24.691352
+DestNode = h; Distance = 0, Neighbor = 42335
+DestNode = g; Distance = 100.0, Neighbor = 42334
+DestNode = i; Distance = 1, Neighbor = 42336
+## Received. Source Node= i; Sequence Number = 84, time = 2021-06-06 13:14:24.986562
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 100.0, Neighbor = h
+DestNode = h; Distance = 100.0, Neighbor = 42335
+## Sent. Source Node= g; Sequence Number = 40, time = 2021-06-06 13:14:29.606392
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 100.0; Neighbor = 42335
+DestNode = i; Distance = 100.0; Neighbor = 42336
+## Received. Source Node= h; Sequence Number = 85, time = 2021-06-06 13:14:29.702940
+DestNode = h; Distance = 0, Neighbor = 42335
+DestNode = g; Distance = 100.0, Neighbor = 42334
+DestNode = i; Distance = 100.0, Neighbor = 42336
+## Received. Source Node= i; Sequence Number = 86, time = 2021-06-06 13:14:30.000150
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 100.0, Neighbor = h
+DestNode = h; Distance = 100.0, Neighbor = 42335
+## Sent. Source Node= g; Sequence Number = 41, time = 2021-06-06 13:14:34.615795
+DestNode = g; Distance = 0; Neighbor = 42334
+DestNode = h; Distance = 100.0; Neighbor = 42335
+DestNode = i; Distance = 100.0; Neighbor = 42336
+## Received. Source Node= h; Sequence Number = 87, time = 2021-06-06 13:14:34.710544
+DestNode = h; Distance = 0, Neighbor = 42335
+DestNode = g; Distance = 100.0, Neighbor = 42334
+DestNode = i; Distance = 100.0, Neighbor = 42336
+## Received. Source Node= i; Sequence Number = 88, time = 2021-06-06 13:14:35.011774
+DestNode = i; Distance = 0, Neighbor = 42336
+DestNode = g; Distance = 100.0, Neighbor = h
+DestNode = h; Distance = 100.0, Neighbor = 42335

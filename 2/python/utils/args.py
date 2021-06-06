@@ -55,7 +55,7 @@ parser.add_argument(
 )
 parser.add_argument(
     '--Unreachable', '-UNR',
-    default=20.0,
+    default=100.0,
     help='不可达距离'
 )
 parser.add_argument(
@@ -65,7 +65,7 @@ parser.add_argument(
 )
 parser.add_argument(
     '--MaxValidTime', '-MVT',
-    default=15000,
+    default=25000,
     help='最大等待时间（ms）'
 )
 parser.add_argument(

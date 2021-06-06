@@ -1,0 +1,80 @@
+## Received. Source Node= a; Sequence Number = 1, time = 2021-06-06 13:02:41.510869
+DestNode = a; Distance = 0, Neighbor = 42328
+DestNode = b; Distance = 2, Neighbor = 42329
+DestNode = c; Distance = 5, Neighbor = 42330
+DestNode = d; Distance = 1, Neighbor = 42331
+## Sent. Source Node= b; Sequence Number = 1, time = 2021-06-06 13:02:44.015448
+DestNode = b; Distance = 0; Neighbor = 42329
+DestNode = a; Distance = 2; Neighbor = 42328
+DestNode = c; Distance = 3; Neighbor = 42330
+DestNode = d; Distance = 2; Neighbor = 42331
+## Received. Source Node= a; Sequence Number = 2, time = 2021-06-06 13:02:46.523736
+DestNode = a; Distance = 0, Neighbor = 42328
+DestNode = b; Distance = 2, Neighbor = 42329
+DestNode = c; Distance = 5, Neighbor = 42330
+DestNode = d; Distance = 1, Neighbor = 42331
+## Sent. Source Node= b; Sequence Number = 2, time = 2021-06-06 13:02:49.031028
+DestNode = b; Distance = 0; Neighbor = 42329
+DestNode = a; Distance = 2; Neighbor = 42328
+DestNode = c; Distance = 3; Neighbor = 42330
+DestNode = d; Distance = 2; Neighbor = 42331
+## Received. Source Node= a; Sequence Number = 3, time = 2021-06-06 13:02:51.528343
+DestNode = a; Distance = 0, Neighbor = 42328
+DestNode = b; Distance = 2, Neighbor = 42329
+DestNode = c; Distance = 5, Neighbor = 42330
+DestNode = d; Distance = 1, Neighbor = 42331
+c time outd time out## Sent. Source Node= b; Sequence Number = 3, time = 2021-06-06 13:02:54.051018
+DestNode = b; Distance = 0; Neighbor = 42329
+DestNode = a; Distance = 2; Neighbor = 42328
+DestNode = c; Distance = 3; Neighbor = 42330
+DestNode = d; Distance = 2; Neighbor = 42331
+## Received. Source Node= a; Sequence Number = 4, time = 2021-06-06 13:02:56.535274
+DestNode = a; Distance = 0, Neighbor = 42328
+DestNode = b; Distance = 2, Neighbor = 42329
+DestNode = c; Distance = 5, Neighbor = 42330
+DestNode = d; Distance = 1, Neighbor = 42331
+## Sent. Source Node= b; Sequence Number = 4, time = 2021-06-06 13:02:59.060977
+DestNode = b; Distance = 0; Neighbor = 42329
+DestNode = a; Distance = 2; Neighbor = 42328
+DestNode = c; Distance = 3; Neighbor = 42330
+DestNode = d; Distance = 2; Neighbor = 42331
+## Received. Source Node= a; Sequence Number = 5, time = 2021-06-06 13:03:01.545158
+DestNode = a; Distance = 0, Neighbor = 42328
+DestNode = b; Distance = 2, Neighbor = 42329
+DestNode = c; Distance = 5, Neighbor = 42330
+DestNode = d; Distance = 1, Neighbor = 42331
+## Sent. Source Node= b; Sequence Number = 5, time = 2021-06-06 13:03:04.077601
+DestNode = b; Distance = 0; Neighbor = 42329
+DestNode = a; Distance = 2; Neighbor = 42328
+DestNode = c; Distance = 3; Neighbor = 42330
+DestNode = d; Distance = 2; Neighbor = 42331
+## Received. Source Node= a; Sequence Number = 6, time = 2021-06-06 13:03:06.565765
+DestNode = a; Distance = 0, Neighbor = 42328
+DestNode = b; Distance = 2, Neighbor = 42329
+DestNode = c; Distance = 5, Neighbor = 42330
+DestNode = d; Distance = 1, Neighbor = 42331
+## Sent. Source Node= b; Sequence Number = 6, time = 2021-06-06 13:03:09.091207
+DestNode = b; Distance = 0; Neighbor = 42329
+DestNode = a; Distance = 2; Neighbor = 42328
+DestNode = c; Distance = 3; Neighbor = 42330
+DestNode = d; Distance = 2; Neighbor = 42331
+## Received. Source Node= a; Sequence Number = 7, time = 2021-06-06 13:03:11.580346
+DestNode = a; Distance = 0, Neighbor = 42328
+DestNode = b; Distance = 2, Neighbor = 42329
+DestNode = c; Distance = 5, Neighbor = 42330
+DestNode = d; Distance = 1, Neighbor = 42331
+## Sent. Source Node= b; Sequence Number = 7, time = 2021-06-06 13:03:14.113633
+DestNode = b; Distance = 0; Neighbor = 42329
+DestNode = a; Distance = 2; Neighbor = 42328
+DestNode = c; Distance = 3; Neighbor = 42330
+DestNode = d; Distance = 2; Neighbor = 42331
+## Received. Source Node= a; Sequence Number = 8, time = 2021-06-06 13:03:16.596984
+DestNode = a; Distance = 0, Neighbor = 42328
+DestNode = b; Distance = 2, Neighbor = 42329
+DestNode = c; Distance = 5, Neighbor = 42330
+DestNode = d; Distance = 1, Neighbor = 42331
+## Sent. Source Node= b; Sequence Number = 8, time = 2021-06-06 13:03:19.135700
+DestNode = b; Distance = 0; Neighbor = 42329
+DestNode = a; Distance = 2; Neighbor = 42328
+DestNode = c; Distance = 3; Neighbor = 42330
+DestNode = d; Distance = 2; Neighbor = 42331
