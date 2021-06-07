@@ -60,7 +60,7 @@ parser.add_argument(
 )
 parser.add_argument(
     '--Frequency', '-F',
-    default=5000,
+    default=2000,
     help='定期时间间隔（ms）'
 )
 parser.add_argument(

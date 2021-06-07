@@ -24,6 +24,7 @@ class DVNode:
         self.logs = []
         self.send_seq = 1
         self.recv_seq = 1
+        self.recv_RTs = {}  # 以Source Node Name为KEY，记录一个时间段内从每个点收到的最新的路由表
 
         self.MaxValidTime = args.MaxValidTime / 1000         # 超时时间
         self.timer_pool = {}        # Timer线程池
@@ -136,7 +137,11 @@ class DVNode:
 
     def __update_table(self, recv_table: dict):
         # 更新表
+
         for to_name, (dist, from_name, neighbor_name) in recv_table.items():
+            # if self.Routing_Table[from_name] == args.Unreachable:
+            #     # 若是一个新启动的点，则先更新到它的距离
+            #     self.Routing_Table[from_name] = recv_table[self.name][0]
             # 目的节点：（距离，发送节点name，使用的邻居name）
             if to_name not in self.Routing_Table:
                 self.Routing_Table[to_name] = (dist + self.Routing_Table[from_name][0], from_name)
