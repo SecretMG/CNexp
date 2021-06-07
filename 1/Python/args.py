@@ -25,7 +25,7 @@ parser.add_argument(
 )   # UDP端口4
 parser.add_argument(
     '--data_size', '-ds',
-    default=4096,
+    default=16384,
     help='PDU 中数据字段的长度，单位为字节'
 )   # PDU(Protocol Data Unit)中数据字段的大小：默认为1024字节
 parser.add_argument(
@@ -40,12 +40,12 @@ parser.add_argument(
 )   # 每10帧中有1帧丢失
 parser.add_argument(
     '--max_sending_no', '-msn',
-    default=10,
+    default=5,
     help='最大序号数'
 )
 parser.add_argument(
     '--sending_window_size', '-sws',
-    default=8,
+    default=4,
     help='发送窗口大小'
 )
 parser.add_argument(

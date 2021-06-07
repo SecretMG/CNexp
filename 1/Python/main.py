@@ -20,6 +20,7 @@ data_size = args.data_size
 
 run_flag = True
 
+
 def get_sw(my_binding, sock_to, file):
     '读文件，调用SW发送，返回一个SenderWindow实例'
     content = [file.encode()]
@@ -53,7 +54,7 @@ def receiver(name, my_binding, sws):
     cnt = 0
 
     p = PDU()
-    while run_flag:
+    while True:
         cnt += 1
         # print(cnt)
         binpack, sender_ip = my_binding.recvfrom(PDU.size)  # 仅接收PDU帧的大小
@@ -86,6 +87,11 @@ def receiver(name, my_binding, sws):
         elif ack == -1:
             'info包'
             rws[mysock][port].get_seq_and_info(seq, info)
+
+        global run_flag
+        if not run_flag:
+            break
+
     print("receiver end.")
 
 
@@ -129,6 +135,9 @@ def main():
     alice_server = threading.Thread(target=receiver, args=('alice', binding1, alice_sws))
     bob_server = threading.Thread(target=receiver, args=('bob', binding2, bob_sws))
 
+    alice_server.setDaemon(True)
+    bob_server.setDaemon(True)
+
     bob_server.start()
     alice_server.start()
     # 全部开始
@@ -143,6 +152,7 @@ def main():
             rws[sock2][sock1[1]].stop()
             sw.write_logs()
             rws[sock2][sock1[1]].write_logs()
+            global run_flag
             run_flag = False
             break
 
@@ -152,3 +162,4 @@ def main():
 if __name__ == '__main__':
     main()
     print('exit.')
+    exit(0)

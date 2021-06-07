@@ -51,5 +51,7 @@ class Logs:
             'ack': ack,
             'status': status
         }
-        print(log)
+
+        info = "%s %s host:%s from:%s" % (str(log['time']), log['type'], str(log['subject']), str(log['recvfrom']))
+        print(f'\r{info}', flush=True)
         self.log_list.append(log)
