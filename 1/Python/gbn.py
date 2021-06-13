@@ -21,8 +21,8 @@ from utils import get_timestamp
 from logs import Logs
 import json
 
-error_rate = 0.05
-loss_rate = 0
+error_rate = float(args.error_rate)
+loss_rate = float(args.loss_rate)
 dir_out = 'outputs'
 
 

@@ -30,12 +30,12 @@ parser.add_argument(
 )   # PDU(Protocol Data Unit)中数据字段的大小：默认为1024字节
 parser.add_argument(
     '--error_rate', '-er',
-    default=10,
+    default=0,
     help='PDU 错误率'
 )   # 每10帧中有1帧出错
 parser.add_argument(
     '--loss_rate', '-lr',
-    default=10,
+    default=0,
     help='PDU 丢失率'
 )   # 每10帧中有1帧丢失
 parser.add_argument(

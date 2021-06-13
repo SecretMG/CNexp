@@ -24,13 +24,15 @@ class DVNode:
         self.logs = []
         self.send_seq = 1
         self.recv_seq = 1
-        self.recv_RTs = {}  # 以Source Node Name为KEY，记录一个时间段内从每个点收到的最新的路由表
+        self.dict_RTs = {}  # {name: 路由表} 记录一个时间段内从每个点收到的最新的路由表
+        self.list_recv_orders = []  # 记录接收顺序
 
         self.MaxValidTime = args.MaxValidTime / 1000         # 超时时间
         self.timer_pool = {}        # Timer线程池
 
         self.__thread_sending = Thread(target=self.__thread_send)
         self.__thread_recving = Thread(target=self.__thread_recv)
+        self.__thread_updating = Thread(target=self.__thread_update)
         self.__event_stop = Event()
         self.__event_run = Event()
 
@@ -46,6 +48,9 @@ class DVNode:
         if not self.__thread_recving.is_alive():
             self.__thread_recving = Thread(target=self.__thread_recv)
             self.__thread_recving.start()
+        if not self.__thread_updating.is_alive():
+            self.__thread_updating = Thread(target=self.__thread_update)
+            self.__thread_updating.start()
 
         self.__event_run.set()
 
@@ -96,8 +101,31 @@ class DVNode:
                 self.timer_pool[name] = Timer(self.MaxValidTime, self.__task_timeout, args=name)
                 self.timer_pool[name].start()
 
-                self.__update_table(recv_table)
+                self.dict_RTs[name] = recv_table    # 一个邻居对应一张表，收到两张则覆盖
+                if name in self.list_recv_orders:
+                    self.list_recv_orders.remove(name)
+                self.list_recv_orders.append(name)
+                print(self.list_recv_orders)
+
         print("recv_thread end.")
+
+    def __thread_update(self):
+        print("update_thread running.")
+        while not self.__event_stop.is_set():
+            if self.__event_run.is_set():
+                sleep(self.Frequency * 5)
+
+                # 先把表读出来，防止读写冲突
+                orders = self.list_recv_orders.copy()
+                self.list_recv_orders.clear()
+                tables = self.dict_RTs.copy()
+                self.dict_RTs.clear()
+                # 按照从旧到新的顺序更新路由表
+                for name in orders:
+                    table = tables[name]
+                    self.__update_table(table)
+                    print(f'更新{name}')
+        print("update_thread end.")
 
     def __read_table(self, path):
         self.Routing_Table = {self.name: (0, self.address[1])}    # 目标名字：（最短距离，到达该目标的首选出境线路）
