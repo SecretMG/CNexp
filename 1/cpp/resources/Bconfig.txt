@@ -1,0 +1,7 @@
+UDPPort = 10001
+DataSize = 4000
+ErrorRate = 0
+LostRate = 3
+SWSize = 7
+InitSeqNo = 0
+Timeout = 5
