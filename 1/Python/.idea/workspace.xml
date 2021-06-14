@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="d99453a0-d227-4063-967d-d0cbe1d8904b" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/outputs/books/2021-05-12-13-36-56_42328/Harry Potter.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/outputs/books/2021-05-12-13-36-56_42329/Harry Potter.txt" beforeDir="false" />
-    </list>
+    <list default="true" id="d99453a0-d227-4063-967d-d0cbe1d8904b" name="Default Changelist" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
