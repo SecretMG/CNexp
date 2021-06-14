@@ -14,6 +14,7 @@
 #define ER -1
 #define SUCCESS 1 
 
+#include <stdio.h>
 #include <string.h>
 static unsigned short crc16_ccitt_table[] =
 {
@@ -61,67 +62,60 @@ short getcrcc(char *buff,int length){
 
 }
 /*数据帧结构体定义*/
+
+typedef struct{
+	int ack; //确认帧的序号
+    int seq;//发送帧的序号
+}Signal;
 typedef struct frame
 {
     char type; //说明是哪种数据结构的帧
-    union 
-    {
-        int ack; //确认帧的序号
-        int seq;//发送帧的序号
-    }signal;  //用union更合适
-    
-    
+    Signal signal;
     char data[Length];//数据字段，实验要求不超过4kB，此处设为4KB
     int length;//数据字段的长度
     short checksum;  //2个字节的crcc校验码
 }Frame;
 
-//TODO:队列设计 
-int getMutex = 0;//互斥访问get，=1代表不能访问 
-Frame getq[QUEUE_SIZE];//存放获得的帧
-
-int getqStart = 0;//目前队列开始 
+Frame getq[QUEUE_SIZE];//获得队列 
+int getqStart = 0;
 int getqEnd = -1;
 int getNum = 0;
 
-int sendMutex = 0;//发送帧 
 
-Frame sendq[QUEUE_SIZE];
-int sendaStart = 0;//目前队列开始 
+
+Frame senda[QUEUE_SIZE];//发送ack队列 
+int sendaStart = 0; 
 int sendaEnd = -1;
 int sendaNum = 0;
 
-Frame senda[QUEUE_SIZE];//new:ack单独放一个队伍中 
-int sendqStart = 0;//目前队列开始 
+Frame sendq[QUEUE_SIZE];//发送普通帧队列 
+int sendqStart = 0;
 int sendqEnd = -1;
-int sendNum = 0;
+int sendqNum = 0;
 
-Frame error;
-struct frame end;
-
+Frame error;//错误帧格式，目前没有用到 
+Frame first;
 
 int empty(int type,int who){
 	//get需要判空 
 	if(type == GETQUE && getNum == 0){
 		return EMPTY;
-	}else if(type == SENDQUE && sendNum == 0 && who == 0){
+	}else if(type == SENDQUE && sendqNum == 0 && who == 0){
 		return EMPTY;
 	}else if(type == SENDQUE && sendaNum == 0 && who == 1){
 		return EMPTY;
-	}
-	else{
+	}else{
 		return NOTEMPTY;
 	} 	
 } 
 
 int full(int type,int who){
 	//send队列需要判满 
-	 /* */ 
 	 if(type == GETQUE && getNum == QUEUE_SIZE){
 	 	return FULL;
-	 }else if (who == 0 &&type == SENDQUE && sendNum == QUEUE_SIZE ){
+	 }else if (who == 0 &&type == SENDQUE && sendqNum == QUEUE_SIZE ){
 	 	return FULL;
-	 }else if (who == 1 &&type == SENDQUE && sendNum == QUEUE_SIZE){
+	 }else if (who == 1 &&type == SENDQUE && sendqNum == QUEUE_SIZE){
 	 	return FULL;
 	 }else{
 	 	return NOTFULL;
@@ -134,15 +128,17 @@ Frame getout(int type,int who){
 		if(!empty(GETQUE,0)){
 			getqEnd=(getqEnd+1)%QUEUE_SIZE;
 			getNum--;
-			return getq[getqEnd]; 
+			Frame &r = getq[getqEnd];
+			//printf("r.seq=%d,r.ack=%d\n",r.signal.seq,r.signal.ack);
+			return r; 
 		}else{
 			return error;
 		}
 	}else if(type == SENDQUE){
-		if(who == 0){
+		if(who == 0){ 
 			if(!empty(SENDQUE,who)){
 				sendqEnd=(sendqEnd+1)%QUEUE_SIZE;
-				sendNum--;
+				sendqNum--;
 				return sendq[sendqEnd]; 
 			}else{
 				return error;
@@ -164,11 +160,24 @@ Frame getout(int type,int who){
 	
 }
 
-int getin(int type,Frame in,int who){
+Frame outWho(int num){
+	// 0 1 2 
+	/*printf("-----outwho:%d----\n",num);
+	printf("sendnum:%d\n",sendNum);
+	printf("data:%s\n",sendq[num].data);*/
+	return sendq[num];
+}
+
+int getin(int type,Frame in,int who){ //TODO:还需要往某个队列做一个备份？ 
 	//只有send队列需要 
 	if(type == GETQUE){
 		if(!full(GETQUE,0)){
-			getq[getqStart] = in;
+			getq[getqStart].type = in.type;
+			getq[getqStart].length = in.length;
+			strcpy(getq[getqStart].data,in.data);
+			getq[getqStart].checksum = in.checksum;
+			getq[getqStart].signal.ack = in.signal.ack;
+			getq[getqStart].signal.seq = in.signal.seq;
 			getqStart = (getqStart+1)%QUEUE_SIZE;
 			getNum++;
 			return SUCCESS;
@@ -180,12 +189,12 @@ int getin(int type,Frame in,int who){
 			if(!full(SENDQUE,who)){
 				sendq[sendqStart] = in;
 				sendqStart = (sendqStart+1)%QUEUE_SIZE;
-				sendNum++;
+				sendqNum++;
 				return SUCCESS;
 			}else{
 				return ER;
 			}
-		}else{
+		}else if(who == 1){
 			if(!full(SENDQUE,who)){
 				senda[sendaStart] = in;
 				sendaStart = (sendaStart+1)%QUEUE_SIZE;
@@ -211,9 +220,9 @@ void clearF(Frame i){
 
 void clearQ(int type){
 	if(type == SENDQUE){
-		sendNum = 0;
-		sendqStart = -1;
-		sendqEnd = 0;
+		sendqNum = 0;
+		sendqStart = 0;
+		sendqEnd = -1;
 	}else{
 		getqStart = 0;//目前队列开始 
 	    getqEnd = -1;
@@ -222,8 +231,10 @@ void clearQ(int type){
 	return;
 }
 
-void endFrameBuild(){
-	end.type='e';
-	return;
+int getSendNum(int who){
+	if(who == 0){
+		return sendqNum;
+	}
+	return sendqNum;
 }
 #endif

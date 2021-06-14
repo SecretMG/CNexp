@@ -16,8 +16,7 @@ int getACK = 0;//是否接收到ack，接收到则负责处理+发送
 int sendBadReport = 0; 
 int winFull; 
 
-//TODO:滑动窗口是一个循环队列，具体怎么设计zhao 
-Frame *window;
+int sendACK;//发送ACK 
 
 
 #endif 

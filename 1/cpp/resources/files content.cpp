@@ -8,11 +8,16 @@ int main(){
 	if(fp == NULL){
 		return 0;
 	}
-	int n = 100000;
+	int n = 70000;
 	srand(time(0));
 	while(n--){
-		fprintf(fp,"%c",rand()%60+32);
+		char a = rand()%60+32;
+		if(a == '\0'){
+			continue;
+		}
+		fprintf(fp,"%c",a);
 	}
+	//fprintf(fp,"EE--EE");
 	fclose(fp);
 	return 0;
 }

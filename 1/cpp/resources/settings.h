@@ -40,9 +40,8 @@ void readConfig(const char *addr){
 }
 
 int isLost(){
-	srand(time(NULL));
 	int a = rand()%10;
-	if(a > LostRate){
+	if(a < LostRate){
 		return 1;
 	}else{
 		return 0;
@@ -52,7 +51,7 @@ int isLost(){
 int isError(){
 	srand(time(NULL));
 	int a = rand()%10;
-	if(a > ErrorRate){
+	if(a < ErrorRate){
 		return 1;
 	}else{
 		return 0;
