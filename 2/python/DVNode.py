@@ -105,7 +105,6 @@ class DVNode:
                 if name in self.list_recv_orders:
                     self.list_recv_orders.remove(name)
                 self.list_recv_orders.append(name)
-                print(self.list_recv_orders)
 
         print("recv_thread end.")
 
@@ -116,15 +115,12 @@ class DVNode:
                 sleep(self.Frequency * 5)
 
                 # 先把表读出来，防止读写冲突
-                orders = self.list_recv_orders.copy()
+                names = self.list_recv_orders.copy()
                 self.list_recv_orders.clear()
                 tables = self.dict_RTs.copy()
                 self.dict_RTs.clear()
                 # 按照从旧到新的顺序更新路由表
-                for name in orders:
-                    table = tables[name]
-                    self.__update_table(table)
-                    print(f'更新{name}')
+                self.__update_table(tables)
         print("update_thread end.")
 
     def __read_table(self, path):
@@ -163,31 +159,34 @@ class DVNode:
             log += f'DestNode = {target}; Distance = {dist}; Neighbor = {port}\n'
         self.logs.append(log)
 
-    def __update_table(self, recv_table: dict):
+    def __update_table(self, tables):
         # 更新表
 
-        for to_name, (dist, from_name, neighbor_name) in recv_table.items():
-            # if self.Routing_Table[from_name] == args.Unreachable:
-            #     # 若是一个新启动的点，则先更新到它的距离
-            #     self.Routing_Table[from_name] = recv_table[self.name][0]
-            # 目的节点：（距离，发送节点name，使用的邻居name）
-            if to_name not in self.Routing_Table:
-                self.Routing_Table[to_name] = (dist + self.Routing_Table[from_name][0], from_name)
-            else:
-                old_target_dist = self.Routing_Table[to_name][0]
-                new_target_dist = dist + self.Routing_Table[from_name][0]
-                if new_target_dist < old_target_dist:
-                    # 二者相同不能更新，这样会导致正确邻居被覆盖成转发邻居
-                    self.Routing_Table[to_name] = (new_target_dist, from_name)
-        now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
-        log = ''
-        print(f'## Received. Source Node= {from_name}; Sequence Number = {self.recv_seq}, time = {now}')
-        log += f'## Received. Source Node= {from_name}; Sequence Number = {self.recv_seq}, time = {now}\n'
-        self.recv_seq += 1
-        for to_name, (dist, from_name, neighbor_name) in recv_table.items():
-            print(f'DestNode = {to_name}; Distance = {dist}, Neighbor = {neighbor_name}')
-            log += f'DestNode = {to_name}; Distance = {dist}, Neighbor = {neighbor_name}\n'
-        self.logs.append(log)
+        new_dists = {}
+        for neighbor, recv_table in tables.items():
+            for to_name, (dist, from_name, neighbor_name) in recv_table.items():
+                # if self.Routing_Table[from_name] == args.Unreachable:
+                #     # 若是一个新启动的点，则先更新到它的距离
+                #     self.Routing_Table[from_name] = recv_table[self.name][0]
+                # 目的节点：（距离，发送节点name，使用的邻居name）
+                if to_name not in new_dists:
+                    new_dists[to_name] = (dist + self.Routing_Table[from_name][0], from_name)
+                else:
+                    old_target_dist = new_dists[to_name][0]
+                    new_target_dist = dist + self.Routing_Table[from_name][0]
+                    if new_target_dist < old_target_dist:
+                        # 二者相同不能更新，这样会导致正确邻居被覆盖成转发邻居
+                        new_dists[to_name] = (new_target_dist, from_name)
+            now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
+            log = ''
+            print(f'## Received. Source Node= {from_name}; Sequence Number = {self.recv_seq}, time = {now}')
+            log += f'## Received. Source Node= {from_name}; Sequence Number = {self.recv_seq}, time = {now}\n'
+            self.recv_seq += 1
+            for to_name, (dist, from_name, neighbor_name) in recv_table.items():
+                print(f'DestNode = {to_name}; Distance = {dist}, Neighbor = {neighbor_name}')
+                log += f'DestNode = {to_name}; Distance = {dist}, Neighbor = {neighbor_name}\n'
+            self.logs.append(log)
+        self.Routing_Table = new_dists
 
     def __task_timeout(self, id):
         # 超时后的任务
