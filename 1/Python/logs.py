@@ -21,11 +21,11 @@ class Logs:
             'type': 'SEND',
             'subject': subject,
             'sendto': sendto,
-            'seq': seq,
+            'send_seq': seq,
             'ack': ack,
             'status': status
         }
-        print(log)
+        # print(log)
         self.log_list.append(log)
 
     def recv_catch(self, subject, recvfrom, seq, ack, status):
@@ -34,11 +34,11 @@ class Logs:
             'type': 'RECV',
             'subject': subject,
             'recvfrom': recvfrom,
-            'seq': seq,
+            'send_seq': seq,
             'ack': ack,
             'status': status
         }
-        print(log)
+        # print(log)
         self.log_list.append(log)
 
     def err_catch(self, err_type, subject, recvfrom, seq, ack, status):
@@ -47,9 +47,11 @@ class Logs:
             'type': err_type,
             'subject': subject,
             'recvfrom': recvfrom,
-            'seq': seq,
+            'send_seq': seq,
             'ack': ack,
             'status': status
         }
-        print(log)
+
+        info = "%s %s host:%s from:%s" % (str(log['time']), log['type'], str(log['subject']), str(log['recvfrom']))
+        print(f'\r{info}', flush=True)
         self.log_list.append(log)

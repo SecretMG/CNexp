@@ -1,6 +1,3 @@
-'''
-@author: MRB
-'''
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -58,7 +55,22 @@ parser.add_argument(
 )
 parser.add_argument(
     '--Unreachable', '-UNR',
-    default=1000,
+    default=100.0,
     help='不可达距离'
+)
+parser.add_argument(
+    '--Frequency', '-F',
+    default=2000,
+    help='定期时间间隔（ms）'
+)
+parser.add_argument(
+    '--MaxValidTime', '-MVT',
+    default=25000,
+    help='最大等待时间（ms）'
+)
+parser.add_argument(
+    '--FrameSize', '-FS',
+    default=1024,
+    help='接受帧的最大长度'
 )
 args = parser.parse_args()
