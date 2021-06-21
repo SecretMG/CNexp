@@ -1,40 +1,40 @@
+import java.io.*;
+import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 public class Test {
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException, IOException {
 
-        // node a
-        NodeInfo node = new NodeInfo("a", 7780);
-        node.addNeighbour("a", 7780, 0);
-        node.addNeighbour("b", 7781, 7);
-        node.addNeighbour("c", 7782, 7);
-        node.frequency = 5000;
+        String line = null;
+        String LogName = "E:\\Presentation\\LogNode-" + args[2];
+        BufferedWriter writer = new BufferedWriter(new FileWriter(LogName));
+        NodeInfo node = new NodeInfo(args[0], Integer.parseInt(args[1]), writer);
+        node.frequency = 500;
+        node.addNeighbour(args[0], Integer.parseInt(args[1]), 0);
 
+        File file = new File(args[2]);
+        BufferedReader br = new BufferedReader(new FileReader(file));
+        while ((line = br.readLine()) != null) {
+            String[] arr = line.split(" ");
 
-        // b
-        NodeInfo node2 = new NodeInfo("b", 7781);
-        node2.frequency = 5000;
-        node2.addNeighbour("b", 7781, 0);
-        node2.addNeighbour("a", 7780, 8);
-        node2.addNeighbour("c", 7782, 5);
-        node2.addNeighbour("d", 7783, 20);
+            node.addNeighbour(arr[0], Integer.parseInt(arr[2]), Integer.parseInt(arr[1]));
+        }
 
-        // c
-        NodeInfo node3 = new NodeInfo("c", 7782);
-        node3.frequency = 5000;
-        node3.addNeighbour("a", 7780, 7);
-        node3.addNeighbour("b", 7781, 3);
-        node3.addNeighbour("c", 7782, 0);
-        node3.addNeighbour("d", 7783, 1);
+        PacketSender sender = new PacketSender(node);
+        TimeUnit.SECONDS.sleep(5);
 
-
-        PacketSender senderb = new PacketSender(node2);
-        TimeUnit.SECONDS.sleep(1);
-        PacketSender sendera = new PacketSender(node);
-        TimeUnit.SECONDS.sleep(1);
-        PacketSender senderc = new PacketSender(node3);
-
-
+        while (true) {
+            String s = (new Scanner(System.in)).next();
+            if (s.equals("k")) {
+                System.exit(0);
+            } else if (s.equals("p")) {
+                sender.pause = true;
+                continue;
+            } else if (s.equals("s")) {
+                sender.pause = false;
+                continue;
+            }
+        }
     }
 }
